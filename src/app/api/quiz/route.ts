@@ -79,7 +79,7 @@ export async function POST(req: NextRequest) {
           points: result.points,
           disclaimer: data.texts.resultDisclaimer,
           ctaLabel: result.ctaLabel || "Conhecer o Além da Fome",
-          ctaTarget: result.ctaTarget || "/",
+          ctaTarget: result.ctaTarget && result.ctaTarget !== "/" ? result.ctaTarget : "/e-book",
         }).catch(() => null);
       }
     }

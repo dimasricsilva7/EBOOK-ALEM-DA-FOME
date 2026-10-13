@@ -99,13 +99,15 @@ export async function saveResult(_: ActionResult, fd: FormData): Promise<ActionR
       subtitle: optStr(fd, "subtitle", 300),
       body: optStr(fd, "body", 4000),
       points: stringList(fd, "points").slice(0, 8) as unknown as Prisma.InputJsonValue,
+      reflection: optStr(fd, "reflection", 600),
+      exercise: optStr(fd, "exercise", 2000),
       ctaLabel: optStr(fd, "ctaLabel", 60),
       ctaTarget: optStr(fd, "ctaTarget", 200),
       active: bool(fd, "active"),
       sortOrder: int(fd, "sortOrder", 0),
     };
-    const forbidden = /(você tem|voce tem|diagnóstico de|transtorno|compulsiv[ao] alimentar|cura|tratamento garantido)/i;
-    if (forbidden.test(`${title} ${data.subtitle ?? ""} ${data.body ?? ""}`)) return { error: "O texto parece afirmar diagnóstico, transtorno ou cura. Resultados devem ser editoriais e acolhedores — revise a redação." };
+    const forbidden = /(você tem|voce tem|diagnóstico de|transtorno|compulsiv[ao] alimentar|\bcura\b|tratamento garantido)/i;
+    if (forbidden.test(`${title} ${data.subtitle ?? ""} ${data.body ?? ""} ${data.reflection ?? ""} ${data.exercise ?? ""}`)) return { error: "O texto parece afirmar diagnóstico, transtorno ou cura. Resultados devem ser editoriais e acolhedores — revise a redação." };
     const r = id ? await db.quizResult.update({ where: { id }, data }) : await db.quizResult.create({ data });
     await audit(admin.id, id ? "quiz_result_updated" : "quiz_result_created", "quizResult", r.id, { summary: `Quiz (rascunho): resultado "${r.title}" salvo` });
     done();

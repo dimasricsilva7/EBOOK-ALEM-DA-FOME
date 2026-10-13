@@ -909,6 +909,9 @@ model QuizResult {
   body      String?
   /// Pontos educativos: ["...", "..."]
   points    Json     @default("[]")
+  /// Pergunta de reflexão e exercício prático exibidos no resultado
+  reflection String?
+  exercise   String?
   ctaLabel  String?
   ctaTarget String?
   active    Boolean  @default(true)

@@ -6,10 +6,11 @@ import { useEffect, useState } from "react";
 import { Logo } from "./Logo";
 
 const NAV = [
-  { href: "/#conteudo-incluido", label: "O que você recebe" },
-  { href: "/#oferta", label: "Investimento" },
-  { href: "/#faq", label: "Dúvidas" },
-  { href: "/quiz", label: "Fazer o quiz" },
+  { href: "/e-book#conteudo-do-ebook", label: "O e-book" },
+  { href: "/e-book#autora", label: "A autora" },
+  { href: "/e-book#oferta", label: "Investimento" },
+  { href: "/e-book#faq", label: "Dúvidas" },
+  { href: "/", label: "Fazer o quiz" },
   { href: "/acesso", label: "Meu acesso" },
 ];
 
@@ -44,7 +45,7 @@ export function Header({ storeName, logoUrl, ctaLabel, announcement }: { storeNa
               </Link>
             ))}
           </nav>
-          <Link href="/#oferta" data-cta="header_cta" className="hidden min-h-[44px] items-center rounded-full bg-ink px-5 text-sm font-semibold text-bg hover:bg-ink/90 sm:inline-flex">
+          <Link href="/e-book#oferta" data-cta="header_cta" className="hidden min-h-[44px] items-center rounded-full bg-ink px-5 text-sm font-semibold text-bg hover:bg-ink/90 sm:inline-flex">
             {ctaLabel}
           </Link>
           <button onClick={() => setOpen(true)} className="-mr-2 grid h-11 w-11 place-items-center rounded-full lg:hidden" aria-label="Abrir menu" aria-expanded={open}>
@@ -70,7 +71,7 @@ export function Header({ storeName, logoUrl, ctaLabel, announcement }: { storeNa
                 </Link>
               ))}
             </nav>
-            <Link href="/#oferta" onClick={() => setOpen(false)} data-cta="menu_cta" className="btn-primary mt-auto w-full">
+            <Link href="/e-book#oferta" onClick={() => setOpen(false)} data-cta="menu_cta" className="btn-primary mt-auto w-full">
               {ctaLabel}
             </Link>
           </div>

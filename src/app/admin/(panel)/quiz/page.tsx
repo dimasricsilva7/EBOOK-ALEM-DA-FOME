@@ -17,7 +17,9 @@ const TEXT_FIELDS: { k: keyof QuizTexts; label: string; long?: boolean }[] = [
   { k: "introEyebrow", label: "Abertura — chamada" },
   { k: "introTitle", label: "Abertura — título" },
   { k: "introText", label: "Abertura — texto", long: true },
+  { k: "introNote", label: "Abertura — texto complementar" },
   { k: "introButton", label: "Abertura — botão" },
+  { k: "introTime", label: "Abertura — tempo estimado" },
   { k: "consentText", label: "Consentimento para tratar as respostas (obrigatório para começar)", long: true },
   { k: "privacyNote", label: "Nota de privacidade" },
   { k: "leadTitle", label: "Captura — título" },
@@ -143,9 +145,11 @@ export default async function QuizEditorPage() {
                 <Field label="Título" className="md:col-span-2"><input name="title" defaultValue={r?.title ?? ""} className={inputCls} /></Field>
                 <Field label="Subtítulo" className="md:col-span-2"><input name="subtitle" defaultValue={r?.subtitle ?? ""} className={inputCls} /></Field>
                 <Field label="Texto" className="md:col-span-2" hint="Parágrafos separados por linha em branco."><textarea name="body" rows={5} defaultValue={r?.body ?? ""} className={textareaCls} /></Field>
-                <div className="md:col-span-2"><p className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-500">Pontos educativos</p><StringListEditor name="points" defaultValue={arr(r?.points)} addLabel="Adicionar ponto" /></div>
+                <div className="md:col-span-2"><p className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-500">Fatores observados (pontos educativos)</p><StringListEditor name="points" defaultValue={arr(r?.points)} addLabel="Adicionar ponto" /></div>
+                <Field label="Pergunta de reflexão" className="md:col-span-2"><textarea name="reflection" rows={2} defaultValue={r?.reflection ?? ""} className={textareaCls} /></Field>
+                <Field label="Exercício prático" className="md:col-span-2" hint="Nunca sugira restringir comida ou adiar refeições."><textarea name="exercise" rows={4} defaultValue={r?.exercise ?? ""} className={textareaCls} /></Field>
                 <Field label="Texto do botão"><input name="ctaLabel" defaultValue={r?.ctaLabel ?? "Conhecer o Além da Fome"} className={inputCls} /></Field>
-                <Field label="Destino do botão"><input name="ctaTarget" defaultValue={r?.ctaTarget ?? "/"} className={inputCls} /></Field>
+                <Field label="Destino do botão"><input name="ctaTarget" defaultValue={r?.ctaTarget ?? "/e-book"} className={inputCls} /></Field>
                 <label className="flex items-center gap-2 text-sm"><input type="checkbox" name="active" defaultChecked={r?.active ?? true} className="h-4 w-4" /> Ativo</label>
                 <div className="md:col-span-2"><SubmitButton>{r ? "Salvar resultado" : "Criar resultado"}</SubmitButton></div>
               </ActionForm>

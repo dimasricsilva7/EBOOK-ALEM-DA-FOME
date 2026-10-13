@@ -1,7 +1,7 @@
 /** Regras do quiz (navegação por regras, resultado editorial, empate) e de status pago. */
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { computeResult, nextQuestionId, pathFor, QUIZ_TEXT_DEFAULTS, type QuizData } from "../src/lib/quiz";
+import { computeResult, rankResults, nextQuestionId, pathFor, QUIZ_TEXT_DEFAULTS, type QuizData } from "../src/lib/quiz";
 import { isPaidStatus } from "../src/lib/domain";
 
 const data: QuizData = {
@@ -27,15 +27,21 @@ test("quiz: regra de navegação pula pergunta ou encerra", () => {
 });
 
 test("quiz: resultado pela soma dos pesos", () => {
-  assert.equal(computeResult(data, { q1: ["a"], q2: ["c"] }), "estresse");
-  assert.equal(computeResult(data, { q1: ["b"], q3: ["f", "e"], q2: ["d"] }), "variadas", "emocoes 2 × culpa 2 → empate");
-  assert.equal(computeResult(data, { q1: ["b"], q3: ["e"], q2: ["d"] }), "culpa");
+  assert.deepEqual(rankResults(data, { q1: ["a"], q2: ["c"] }), { key: "estresse", secondaryKey: null });
+  assert.deepEqual(rankResults(data, { q1: ["b"], q3: ["e"], q2: ["d"] }), { key: "culpa", secondaryKey: null }, "culpa 2 × emocoes 1 → só culpa");
 });
 
-test("quiz: empate ou sem pontuação → resultado padrão (sem rotular)", () => {
-  assert.equal(computeResult(data, { q1: ["a"], q2: ["d"] }), "variadas");
+test("quiz: temas se combinam (empate entre dois ou segundo tema próximo)", () => {
+  assert.deepEqual(rankResults(data, { q1: ["b"], q3: ["f", "e"], q2: ["d"] }), { key: "emocoes", secondaryKey: "culpa" }, "emocoes 2 × culpa 2 → os dois");
+  assert.deepEqual(rankResults(data, { q1: ["a"], q2: ["d"] }), { key: "estresse", secondaryKey: "culpa" });
+  assert.deepEqual(rankResults(data, { q1: ["b"], q2: ["c"], q3: ["f"] }), { key: "estresse", secondaryKey: "emocoes" }, "estresse 2 × emocoes 2");
+});
+
+test("quiz: sem pontuação ou empate triplo → resultado padrão (sem rotular)", () => {
   assert.equal(computeResult(data, {}), "variadas");
   assert.equal(computeResult(data, { q1: ["x"] }), "variadas");
+  const triple: QuizData = { ...data, questions: [...data.questions, { id: "q4", title: "Q4", helpText: null, type: "single", required: false, options: [{ id: "g", label: "G", resultKey: "culpa", weight: 1, nextQuestionId: null }] }] };
+  assert.deepEqual(rankResults(triple, { q1: ["a"], q3: ["f"], q4: ["g"] }), { key: "variadas", secondaryKey: null });
 });
 
 test("acesso: só status pagos liberam materiais", () => {

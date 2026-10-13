@@ -61,7 +61,7 @@ export const SETTING_DEFAULTS: Record<string, string> = {
   // PIX
   pix_enabled: "true",
   pix_method_label: "PIX",
-  pix_badge: "confirmação na hora",
+  pix_badge: "",
   pix_description: "Confirmação automática. O QR Code e o código copia e cola aparecem na próxima tela.",
   pix_button_label: "Gerar PIX",
   // Crediário (protocolo próprio, NÃO é cartão). Desativado até configurar.

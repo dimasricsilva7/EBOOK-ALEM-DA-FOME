@@ -103,6 +103,7 @@ export const TRACKED_EVENTS = [
   "quiz_lead_captured",
   "quiz_completed",
   "quiz_result_view",
+  "result_viewed",
   "quiz_cta_click",
   "offer_view",
   "product_view",
@@ -184,6 +185,9 @@ export const SECTION_TYPES = {
   limits: "Limites do produto (aviso importante)",
   faq: "Perguntas frequentes",
   final_cta: "CTA final",
+  topics: "O que você encontrará no e-book (tópicos)",
+  showcase: "Apresentação visual do produto",
+  author: "Sobre a autora",
 } as const;
 export type SectionType = keyof typeof SECTION_TYPES;
 

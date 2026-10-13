@@ -3,8 +3,11 @@
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Icon } from "@/components/ui/Icon";
-import { getClientContext, metaCustom, randomId, track, trackOnce } from "@/lib/client/tracking";
-import { computeResult, nextQuestionId, pathFor, type QuizData } from "@/lib/quiz";
+import { gaEvent, getClientContext, metaCustom, randomId, track, trackOnce } from "@/lib/client/tracking";
+import { nextQuestionId, pathFor, rankResults, type QuizData } from "@/lib/quiz";
+import { formatBRL } from "@/utils/format";
+
+export type QuizProduct = { name: string; subtitle: string | null; shortDescription: string | null; imageUrl: string | null; priceCents: number; deliveryFormat: string | null };
 
 const KEY = "adf_quiz";
 
@@ -19,6 +22,8 @@ type Saved = {
   leadDone: boolean;
   resultKey: string | null;
   resultTitle?: string | null;
+  secondaryKey?: string | null;
+  firstName?: string | null;
   updatedAt: number;
 };
 
@@ -43,7 +48,20 @@ async function api(body: Record<string, unknown>) {
   return json as { ok: true; resultKey?: string };
 }
 
-export function QuizClient({ data, versionId, preview = false }: { data: QuizData; versionId: string; preview?: boolean }) {
+/** Mantém UTMs e click IDs ao seguir do resultado para a página do e-book. */
+function carryParams(href: string) {
+  if (typeof window === "undefined" || !href.startsWith("/")) return href;
+  const keep = new URLSearchParams();
+  new URLSearchParams(location.search).forEach((v, k) => {
+    if (/^(utm_|fbclid$|gclid$|ttclid$)/.test(k)) keep.set(k, v);
+  });
+  const qs = keep.toString();
+  if (!qs) return href;
+  const [path, hash] = href.split("#");
+  return `${path}${path.includes("?") ? "&" : "?"}${qs}${hash ? `#${hash}` : ""}`;
+}
+
+export function QuizClient({ data, versionId, preview = false, product = null, offerHref = "/e-book" }: { data: QuizData; versionId: string; preview?: boolean; product?: QuizProduct | null; offerHref?: string }) {
   const [s, setS] = useState<Saved>(() => fresh(versionId));
   const [ready, setReady] = useState(false);
   const [selected, setSelected] = useState<string[]>([]);
@@ -51,6 +69,7 @@ export function QuizClient({ data, versionId, preview = false }: { data: QuizDat
   const [busy, setBusy] = useState(false);
   const [lead, setLead] = useState({ name: "", email: "", marketing: false });
   const [leadErrors, setLeadErrors] = useState<Record<string, string>>({});
+  const [ctaHref, setCtaHref] = useState(offerHref);
   const headingRef = useRef<HTMLHeadingElement>(null);
   const t = data.texts;
 
@@ -89,6 +108,11 @@ export function QuizClient({ data, versionId, preview = false }: { data: QuizDat
     return Math.round((idx / Math.max(1, idx + 1 + remaining)) * 92);
   })();
   const result = data.results.find((r) => r.key === s.resultKey) ?? null;
+  const secondary = data.results.find((r) => r.key === s.secondaryKey && r.key !== s.resultKey) ?? null;
+
+  useEffect(() => {
+    setCtaHref(carryParams(result?.ctaTarget && result.ctaTarget !== "/" ? result.ctaTarget : offerHref));
+  }, [result, offerHref]);
 
   function start() {
     if (!s.consent) {
@@ -98,17 +122,19 @@ export function QuizClient({ data, versionId, preview = false }: { data: QuizDat
     const first = data.questions[0]?.id ?? null;
     setS((x) => ({ ...x, stage: "question", current: first, history: [] }));
     metaCustom("QuizStarted", { name: "quiz_started", props: { total: data.questions.length } });
+    gaEvent("quiz_started");
     if (!preview) api({ action: "start", sessionId: s.id, consent: true, context: getClientContext() }).catch(() => null);
   }
 
-  async function finish(answers: Record<string, string[]>, leadDone: boolean) {
+  async function finish(answers: Record<string, string[]>, leadDone: boolean, firstName: string | null = null) {
     // Captura de lead antes do resultado (se ativada)
     if (t.leadEnabled && !leadDone) {
       setS((x) => ({ ...x, answers, stage: "lead", current: null }));
       return;
     }
     setBusy(true);
-    let key = computeResult(data, answers);
+    const ranked = rankResults(data, answers);
+    let key = ranked.key;
     if (!preview) {
       try {
         const r = await api({ action: "complete", sessionId: s.id });
@@ -118,9 +144,12 @@ export function QuizClient({ data, versionId, preview = false }: { data: QuizDat
       }
     }
     const title = data.results.find((r) => r.key === key)?.title ?? null;
-    setS((x) => ({ ...x, answers, stage: "result", current: null, resultKey: key, resultTitle: title, leadDone }));
+    const secondaryKey = key === ranked.key ? ranked.secondaryKey : null;
+    setS((x) => ({ ...x, answers, stage: "result", current: null, resultKey: key, resultTitle: title, secondaryKey, leadDone, firstName: firstName ?? x.firstName ?? null }));
     metaCustom("QuizCompleted", { name: "quiz_completed" });
-    track("quiz_result_view");
+    gaEvent("quiz_completed");
+    track("result_viewed");
+    gaEvent("result_viewed");
     setBusy(false);
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
@@ -136,6 +165,7 @@ export function QuizClient({ data, versionId, preview = false }: { data: QuizDat
     if (!optionIds.length) delete answers[q.id];
     const step = s.history.length + 1;
     metaCustom("QuizStepCompleted", { name: "quiz_step_completed", props: { step, total: data.questions.length } });
+    gaEvent("quiz_step_completed", { step });
     if (!preview && optionIds.length) api({ action: "answer", sessionId: s.id, questionId: q.id, optionIds }).catch(() => null);
     const next = nextQuestionId(data, q.id, optionIds);
     if (next) setS((x) => ({ ...x, answers, current: next, history: [...x.history, q.id] }));
@@ -165,7 +195,7 @@ export function QuizClient({ data, versionId, preview = false }: { data: QuizDat
       if (!preview) await api({ action: "lead", sessionId: s.id, name: lead.name.trim(), email: lead.email.trim(), marketingConsent: lead.marketing });
       track("quiz_lead_captured");
       setBusy(false);
-      await finish(s.answers, true);
+      await finish(s.answers, true, lead.name.trim().split(/\s+/)[0] || null);
     } catch (err) {
       setLeadErrors({ form: err instanceof Error ? err.message : "Não foi possível salvar agora." });
       setBusy(false);
@@ -207,6 +237,7 @@ export function QuizClient({ data, versionId, preview = false }: { data: QuizDat
           <p className="eyebrow">{t.introEyebrow}</p>
           <h1 ref={headingRef} tabIndex={-1} className="mt-4 font-display text-[2.2rem] leading-[1.1] text-ink outline-none sm:text-5xl">{t.introTitle}</h1>
           <p className="lead mx-auto mt-5 max-w-xl">{t.introText}</p>
+          {t.introNote && <p className="mx-auto mt-4 max-w-xl text-[15px] leading-relaxed text-ink/70">{t.introNote}</p>}
           <label className="mx-auto mt-8 flex max-w-xl cursor-pointer items-start gap-3 rounded-2xl border border-line bg-surface p-4 text-left text-sm leading-relaxed text-ink/85">
             <input type="checkbox" checked={s.consent} onChange={(e) => { setS((x) => ({ ...x, consent: e.target.checked })); setError(null); }} className="mt-0.5 h-5 w-5 shrink-0 accent-[rgb(var(--c-primary))]" />
             <span>
@@ -217,7 +248,12 @@ export function QuizClient({ data, versionId, preview = false }: { data: QuizDat
           <button onClick={start} data-cta="quiz_start" className="btn-primary mt-6 w-full sm:w-auto sm:min-w-[260px]">
             {t.introButton} <Icon name="arrow" className="h-5 w-5" />
           </button>
-          <p className="mt-4 text-xs text-muted">{t.privacyNote}</p>
+          {t.introTime && (
+            <p className="mt-4 flex items-center justify-center gap-1.5 text-sm text-ink/70">
+              <Icon name="clock" className="h-4 w-4 text-secondary" /> {t.introTime}
+            </p>
+          )}
+          <p className="mt-2 text-xs text-muted">{t.privacyNote}</p>
         </div>
       )}
 
@@ -294,7 +330,7 @@ export function QuizClient({ data, versionId, preview = false }: { data: QuizDat
             {busy ? "Preparando seu resultado…" : t.leadButton}
           </button>
           {!t.leadRequired && (
-            <button type="button" disabled={busy} onClick={() => finish(s.answers, true)} className="btn-ghost mt-2 w-full text-muted">
+            <button type="button" disabled={busy} onClick={() => finish(s.answers, true)} data-cta="quiz_lead_skip" className="btn-ghost mt-2 w-full border border-line">
               {t.leadSkipLabel}
             </button>
           )}
@@ -307,7 +343,8 @@ export function QuizClient({ data, versionId, preview = false }: { data: QuizDat
           {result && !busy && (
             <>
               <p className="eyebrow">{t.resultEyebrow}</p>
-              <h1 ref={headingRef} tabIndex={-1} className="mt-4 font-display text-[2.1rem] leading-[1.12] text-ink outline-none sm:text-5xl">{result.title}</h1>
+              <p className="mt-4 text-lg text-ink/80">{s.firstName ? `${s.firstName}, obrigada por compartilhar.` : "Obrigada por compartilhar."}</p>
+              <h1 ref={headingRef} tabIndex={-1} className="mt-2 font-display text-[2.1rem] leading-[1.12] text-ink outline-none sm:text-5xl">{result.title}</h1>
               {result.subtitle && <p className="lead mt-4">{result.subtitle}</p>}
               {result.body && (
                 <div className="mt-6 space-y-4 text-[1.0625rem] leading-relaxed text-ink/85">
@@ -317,21 +354,77 @@ export function QuizClient({ data, versionId, preview = false }: { data: QuizDat
                 </div>
               )}
               {result.points.length > 0 && (
-                <ul className="mt-8 space-y-3 rounded-card border border-line bg-surface p-6">
-                  {result.points.map((p) => (
-                    <li key={p} className="flex gap-3 leading-relaxed text-ink/85">
-                      <Icon name="leaf" className="mt-1 h-4 w-4 shrink-0 text-secondary" /> {p}
-                    </li>
-                  ))}
-                </ul>
+                <div className="mt-8 rounded-card border border-line bg-surface p-6">
+                  <h2 className="font-display text-xl text-ink">O que observamos nas suas respostas</h2>
+                  <ul className="mt-4 space-y-3">
+                    {result.points.map((p) => (
+                      <li key={p} className="flex gap-3 leading-relaxed text-ink/85">
+                        <Icon name="leaf" className="mt-1 h-4 w-4 shrink-0 text-secondary" /> {p}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
               )}
-              <Link href={result.ctaTarget || "/"} data-cta="quiz_result_cta" onClick={() => track("quiz_cta_click")} className="btn-primary mt-8 w-full">
-                {result.ctaLabel || "Conhecer o Além da Fome"} <Icon name="arrow" className="h-5 w-5" />
+              {secondary && (
+                <div className="mt-4 rounded-card border border-line bg-sand/50 p-6">
+                  <p className="text-xs font-semibold uppercase tracking-[0.16em] text-secondary">Também apareceu nas suas respostas</p>
+                  <h2 className="mt-2 font-display text-xl text-ink">{secondary.title}</h2>
+                  {secondary.subtitle && <p className="mt-2 leading-relaxed text-ink/80">{secondary.subtitle}</p>}
+                </div>
+              )}
+              {result.reflection && (
+                <figure className="mt-8 border-l-2 border-accent pl-5">
+                  <figcaption className="text-xs font-semibold uppercase tracking-[0.16em] text-secondary">Para refletir</figcaption>
+                  <blockquote className="mt-2 font-display text-[1.45rem] italic leading-snug text-ink">{result.reflection}</blockquote>
+                </figure>
+              )}
+              {result.exercise && (
+                <div className="mt-8 rounded-card bg-surface p-6 shadow-soft">
+                  <h2 className="flex items-center gap-2 font-display text-xl text-ink">
+                    <Icon name="pen" className="h-5 w-5 text-primary" /> Um exercício para experimentar
+                  </h2>
+                  <div className="mt-3 space-y-3 leading-relaxed text-ink/85">
+                    {result.exercise.split(/\n\s*\n/).map((p, i) => (
+                      <p key={i}>{p}</p>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <section className="mt-10 overflow-hidden rounded-[2rem] border border-line bg-sand/40">
+                <div className="grid gap-6 p-6 sm:grid-cols-[150px_1fr] sm:p-8">
+                  {product?.imageUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={product.imageUrl} alt={`Capa: ${product.name}`} className="mx-auto w-32 rounded-lg object-contain shadow-lift sm:w-full" loading="lazy" />
+                  ) : (
+                    <div className="mx-auto grid aspect-[3/4] w-32 place-items-center rounded-lg bg-ink p-3 text-center font-display text-lg italic leading-tight text-bg shadow-lift sm:w-full" aria-hidden="true">
+                      Além da Fome
+                    </div>
+                  )}
+                  <div>
+                    <p className="eyebrow">Para continuar no seu ritmo</p>
+                    <h2 className="mt-2 font-display text-2xl text-ink">{product?.name ?? "Além da Fome — E-book"}</h2>
+                    <p className="mt-2 leading-relaxed text-ink/80">
+                      {product?.shortDescription || "Um e-book educativo para reconhecer padrões, compreender melhor suas emoções e explorar formas mais conscientes de cuidar de si — sem culpa e sem regras rígidas."}
+                    </p>
+                    {product && (
+                      <p className="mt-3 text-sm text-muted">
+                        {product.deliveryFormat ? `${product.deliveryFormat} · ` : ""}
+                        {formatBRL(product.priceCents)}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </section>
+              <Link href={ctaHref} data-cta="quiz_result_cta" onClick={() => track("quiz_cta_click")} className="btn-primary mt-6 w-full">
+                {result.ctaLabel || "Conhecer o e-book Além da Fome"} <Icon name="arrow" className="h-5 w-5" />
               </Link>
               <p className="mt-6 flex gap-2 rounded-2xl bg-sand/70 p-4 text-xs leading-relaxed text-muted">
                 <Icon name="info" className="h-4 w-4 shrink-0 text-secondary" /> {t.resultDisclaimer}
               </p>
-              <button onClick={restart} className="btn-ghost mt-3 w-full text-muted">Refazer o quiz</button>
+              <button onClick={restart} className="btn-ghost mt-3 w-full text-muted">
+                Refazer o quiz
+              </button>
             </>
           )}
         </div>

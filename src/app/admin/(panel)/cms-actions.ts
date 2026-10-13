@@ -28,6 +28,7 @@ const steps = (fd: FormData, k: string) =>
 function parseConfig(type: string, fd: FormData, prev: Record<string, unknown>): Record<string, unknown> {
   const c: Record<string, unknown> = { ...prev };
   c.eyebrow = str(fd, "cfg_eyebrow", 60);
+  c.anchor = str(fd, "cfg_anchor", 40).toLowerCase().replace(/[^a-z0-9-]/g, "");
   switch (type) {
     case "hero":
       c.badges = stringList(fd, "cfg_badges").slice(0, 4);
@@ -48,7 +49,19 @@ function parseConfig(type: string, fd: FormData, prev: Record<string, unknown>):
       break;
     case "method":
     case "trust":
+    case "topics":
       c.items = iconItems(fd, "cfg_items");
+      break;
+    case "showcase":
+      c.formatItems = stringList(fd, "cfg_formatItems").slice(0, 8);
+      c.previewTitle = str(fd, "cfg_previewTitle", 80);
+      c.imageAlt = str(fd, "cfg_imageAlt", 160);
+      break;
+    case "author":
+      c.name = str(fd, "cfg_name", 80);
+      c.role = str(fd, "cfg_role", 120);
+      c.context = str(fd, "cfg_context", 600);
+      c.imageAlt = str(fd, "cfg_imageAlt", 160);
       break;
     case "audience":
       c.forYouTitle = str(fd, "cfg_forYouTitle", 60);
@@ -76,7 +89,7 @@ export async function saveSection(_: ActionResult, fd: FormData): Promise<Action
       data: {
         active: bool(fd, "active"),
         title: optStr(fd, "title", 200),
-        subtitle: optStr(fd, "subtitle", 400),
+        subtitle: optStr(fd, "subtitle", 1200),
         body: optStr(fd, "body", 4000),
         imageUrl: url(fd, "imageUrl"),
         videoUrl: url(fd, "videoUrl"),

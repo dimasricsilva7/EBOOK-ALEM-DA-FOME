@@ -18,7 +18,6 @@ export async function generateMetadata(): Promise<Metadata> {
     title: { default: title, template: `%s | ${s.store_name}` },
     description,
     applicationName: s.store_name,
-    alternates: { canonical: "/" },
     openGraph: { type: "website", locale: "pt_BR", siteName: s.store_name, title, description, images },
     twitter: { card: "summary_large_image", title, description, images },
     icons: { icon: s.favicon_url || "/favicon.svg" },

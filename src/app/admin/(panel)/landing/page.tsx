@@ -16,7 +16,7 @@ export default async function LandingCmsPage() {
       <PageHeader
         title="Landing page"
         description="Blocos da página inicial: ative, reordene e edite cada seção. Header, footer e CTA fixo ficam em Configurações."
-        actions={<Link href="/" target="_blank" className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium">Ver página</Link>}
+        actions={<Link href="/e-book" target="_blank" className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium">Ver página</Link>}
       />
       <Table
         rows={sections}

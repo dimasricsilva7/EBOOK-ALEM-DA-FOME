@@ -7,11 +7,27 @@ import { Fragment } from "react";
  */
 const LINK = /\[([^\]]{1,120})\]\(((?:\/|#|https:\/\/)[^\s)]{0,300})\)/g;
 
+const EMPHASIS = /\*\*([^*]{1,200})\*\*|\*([^*]{1,200})\*/g;
+
+/** **negrito** e *itálico* (sem HTML). */
+function emphasis(text: string, base: number) {
+  const out: React.ReactNode[] = [];
+  let last = 0;
+  for (const m of text.matchAll(EMPHASIS)) {
+    out.push(text.slice(last, m.index));
+    const k = `${base}-${m.index}`;
+    out.push(m[1] ? <strong key={k} className="font-semibold text-ink">{m[1]}</strong> : <em key={k}>{m[2]}</em>);
+    last = (m.index ?? 0) + m[0].length;
+  }
+  out.push(text.slice(last));
+  return out;
+}
+
 function inline(text: string) {
   const out: React.ReactNode[] = [];
   let last = 0;
   for (const m of text.matchAll(LINK)) {
-    out.push(text.slice(last, m.index));
+    out.push(...emphasis(text.slice(last, m.index), last));
     const href = m[2];
     out.push(
       href.startsWith("https://") ? (
@@ -26,7 +42,7 @@ function inline(text: string) {
     );
     last = (m.index ?? 0) + m[0].length;
   }
-  out.push(text.slice(last));
+  out.push(...emphasis(text.slice(last), last));
   return out;
 }
 

@@ -54,19 +54,61 @@ function SoftArt({ className = "" }: { className?: string }) {
 
 // ───────────── Hero ─────────────
 
-export function Hero({ section }: P) {
+/** Ícone do selo pelo sentido do texto (o admin escreve livremente). */
+function badgeIcon(text: string) {
+  const t = text.toLowerCase();
+  if (/pagamento|segur|protegid/.test(t)) return "lock";
+  if (/ritmo|tempo|quando quiser/.test(t)) return "clock";
+  if (/acesso|digital|download|e-mail/.test(t)) return "download";
+  if (/educativ|conte[uú]do|e-book|leitura/.test(t)) return "book";
+  return "check";
+}
+
+/**
+ * Capa do e-book em composição de livro. Com capa cadastrada, a imagem é exibida inteira, sem cortes ou
+ * distorção; sem capa, mostra apenas uma capa tipográfica neutra com o nome do produto (não simula páginas).
+ */
+function BookMockup({ cover, title, subtitle, className = "" }: { cover: string | null | undefined; title: string; subtitle?: string | null; className?: string }) {
+  return (
+    <div className={`relative mx-auto w-[min(76%,330px)] ${className}`}>
+      <div className="absolute inset-x-8 -bottom-5 h-10 rounded-[50%] bg-ink/25 blur-2xl" aria-hidden="true" />
+      <div className="relative overflow-hidden rounded-l-[4px] rounded-r-xl shadow-lift">
+        {cover ? (
+          <img src={cover} alt={`Capa do ${title}`} className="block h-auto w-full" fetchPriority="high" />
+        ) : (
+          <div className="flex aspect-[3/4] flex-col justify-between bg-ink p-7 text-bg sm:p-9" role="img" aria-label={title}>
+            <span className="text-[11px] font-semibold uppercase tracking-[0.28em] text-accent">E-book</span>
+            <div>
+              <p className="font-display text-[2.4rem] italic leading-[1.02] sm:text-5xl">Além da Fome</p>
+              {subtitle && <p className="mt-4 text-sm leading-snug text-bg/70">{subtitle}</p>}
+            </div>
+            <Icon name="leaf" className="h-7 w-7 text-accent" strokeWidth={1.3} />
+          </div>
+        )}
+        <div className="pointer-events-none absolute inset-y-0 left-0 w-4 bg-gradient-to-r from-black/30 via-black/10 to-transparent" aria-hidden="true" />
+      </div>
+    </div>
+  );
+}
+
+export function Hero({ section, ctx }: P) {
   const badges = cfgArr<string>(section.config, "badges").filter(Boolean).slice(0, 4);
   const eyebrow = cfgStr(section.config, "eyebrow");
   const img = section.imageUrl;
+  const paragraphs = (section.subtitle ?? "").split(/\n\s*\n/).map((p) => p.trim()).filter(Boolean);
   return (
     <section className="relative overflow-hidden">
-      <div className="container-page grid items-center gap-10 pb-16 pt-8 sm:pt-12 lg:grid-cols-[1.05fr_0.95fr] lg:gap-14 lg:pb-24 lg:pt-16">
+      <div className="container-page grid items-center gap-12 pb-16 pt-8 sm:pt-12 lg:grid-cols-[1.1fr_0.9fr] lg:gap-14 lg:pb-24 lg:pt-16">
         <div className="animate-rise">
           {eyebrow && <p className="eyebrow">{eyebrow}</p>}
-          <h1 className="mt-5 font-display text-[2.35rem] leading-[1.06] text-ink sm:text-[3.2rem] lg:text-[3.75rem]">
+          <h1 className="mt-5 font-display text-[2.1rem] leading-[1.08] text-ink sm:text-[3rem] lg:text-[3.35rem]">
             <RichTitle text={section.title ?? ""} />
           </h1>
-          {section.subtitle && <p className="lead mt-6 max-w-xl">{section.subtitle}</p>}
+          {paragraphs.map((p, i) => (
+            <p key={i} className={`lead max-w-xl ${i ? "mt-4" : "mt-6"}`}>
+              {p}
+            </p>
+          ))}
           <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
             <ScrollCta label={section.ctaLabel || "Quero conhecer o Além da Fome"} target={section.ctaTarget || "#oferta"} element="hero_cta" className="btn-primary w-full sm:w-auto" />
             {cfgStr(section.config, "secondaryLabel") && (
@@ -77,9 +119,9 @@ export function Hero({ section }: P) {
           </div>
           {badges.length > 0 && (
             <ul className="mt-8 flex flex-wrap gap-x-6 gap-y-3 text-sm text-ink/75">
-              {badges.map((b, i) => (
+              {badges.map((b) => (
                 <li key={b} className="flex items-center gap-2">
-                  <Icon name={["book", "lock", "pix", "clock"][i] ?? "check"} className="h-4 w-4 text-secondary" />
+                  <Icon name={badgeIcon(b)} className="h-4 w-4 text-secondary" />
                   {b}
                 </li>
               ))}
@@ -90,12 +132,13 @@ export function Hero({ section }: P) {
           {img ? (
             <figure className="relative">
               <img src={img} alt={cfgStr(section.config, "imageAlt") || ""} className="aspect-[4/5] w-full rounded-[2rem] object-cover shadow-lift sm:aspect-[5/5.4]" fetchPriority="high" />
-              <div className="absolute -bottom-5 -left-3 hidden rounded-2xl border border-line bg-surface/95 px-5 py-4 shadow-soft backdrop-blur sm:block">
-                <p className="font-display text-lg italic text-ink">“Você não precisa se tratar com dureza para começar a cuidar de si.”</p>
-              </div>
             </figure>
           ) : (
-            <SoftArt className="aspect-[4/5] w-full sm:aspect-square" />
+            <div className="relative rounded-[2rem] bg-sand px-6 py-12 sm:py-16">
+              <div className="absolute -left-10 top-6 h-48 w-48 rounded-full bg-accent/40 blur-2xl" aria-hidden="true" />
+              <div className="absolute bottom-0 right-0 h-56 w-56 rounded-full bg-secondary/20 blur-3xl" aria-hidden="true" />
+              <BookMockup cover={ctx.product?.imageUrl} title={ctx.product?.name ?? "Além da Fome — E-book"} subtitle={ctx.product?.subtitle} />
+            </div>
           )}
         </div>
       </div>
@@ -196,6 +239,119 @@ export function Method({ section }: P) {
           </div>
         )}
         {section.body && <p className="mt-8 max-w-2xl text-sm text-bg/60">{section.body}</p>}
+      </div>
+    </section>
+  );
+}
+
+// ───────────── O que você encontrará no e-book (tópicos editáveis) ─────────────
+
+export function Topics({ section }: P) {
+  const items = cfgArr<{ icon?: string; title?: string; text?: string }>(section.config, "items").filter((x) => x?.title);
+  if (!items.length) return null;
+  return (
+    <section className="section">
+      <div className="container-page">
+        <Heading section={section} center />
+        <ol className="mx-auto mt-14 grid max-w-5xl gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {items.map((it, i) => (
+            <Reveal key={i} delay={i * 60}>
+              <li className="flex h-full flex-col rounded-card border border-line bg-surface p-6 sm:p-7">
+                <div className="flex items-center justify-between">
+                  <span className="grid h-11 w-11 place-items-center rounded-full bg-sand text-primary">
+                    <Icon name={it.icon || "leaf"} className="h-5 w-5" />
+                  </span>
+                  <span className="font-display text-3xl italic text-accent">{String(i + 1).padStart(2, "0")}</span>
+                </div>
+                <h3 className="mt-5 font-display text-xl leading-snug text-ink">{it.title}</h3>
+                {it.text && <p className="mt-2 text-[15px] leading-relaxed text-muted">{it.text}</p>}
+              </li>
+            </Reveal>
+          ))}
+        </ol>
+        {section.body && <p className="mx-auto mt-8 max-w-2xl text-center text-sm text-muted">{section.body}</p>}
+      </div>
+    </section>
+  );
+}
+
+// ───────────── Apresentação visual do produto ─────────────
+
+export function Showcase({ section, ctx }: P) {
+  const formatItems = cfgArr<string>(section.config, "formatItems").filter(Boolean);
+  const previews = ctx.gallery.slice(0, 6);
+  return (
+    <section className="section paper">
+      <div className="container-page grid items-center gap-12 lg:grid-cols-[0.95fr_1.05fr] lg:gap-20">
+        <div className="relative rounded-[2rem] bg-surface/70 px-6 py-12 sm:py-14">
+          {section.imageUrl ? (
+            <img src={section.imageUrl} alt={cfgStr(section.config, "imageAlt") || `Apresentação do ${ctx.product?.name ?? "e-book"}`} className="mx-auto block h-auto max-h-[520px] w-auto max-w-full rounded-2xl" loading="lazy" />
+          ) : (
+            <BookMockup cover={ctx.product?.imageUrl} title={ctx.product?.name ?? "Além da Fome — E-book"} subtitle={ctx.product?.subtitle} />
+          )}
+        </div>
+        <div>
+          <Heading section={section} />
+          {section.body && <RichText text={section.body} className="mt-6 text-[1.0625rem] leading-relaxed text-ink/80" />}
+          {formatItems.length > 0 && (
+            <ul className="mt-8 space-y-3">
+              {formatItems.map((t) => (
+                <li key={t} className="flex gap-3 text-[15.5px] leading-relaxed text-ink/85">
+                  <Icon name="check" className="mt-0.5 h-5 w-5 shrink-0 text-secondary" strokeWidth={2} /> {t}
+                </li>
+              ))}
+            </ul>
+          )}
+          <div className="mt-9">
+            <ScrollCta label={section.ctaLabel || "Quero o e-book"} target={section.ctaTarget || "#oferta"} element="showcase_cta" className="btn-primary w-full sm:w-auto" />
+          </div>
+        </div>
+      </div>
+      {previews.length > 0 && (
+        <div className="container-page mt-14">
+          <p className="text-center text-xs font-semibold uppercase tracking-[0.18em] text-secondary">{cfgStr(section.config, "previewTitle") || "Prévia de páginas internas"}</p>
+          <div className="mx-auto mt-6 grid max-w-5xl grid-cols-2 gap-3 sm:grid-cols-3">
+            {previews.map((g) => (
+              <figure key={g.id} className="overflow-hidden rounded-2xl border border-line bg-surface">
+                <img src={g.imageUrl} alt={g.alt || g.title} className="aspect-[3/4] w-full object-cover object-top" loading="lazy" />
+              </figure>
+            ))}
+          </div>
+        </div>
+      )}
+    </section>
+  );
+}
+
+// ───────────── Sobre a autora ─────────────
+
+export function Author({ section }: P) {
+  const name = cfgStr(section.config, "name");
+  const role = cfgStr(section.config, "role");
+  const context = cfgStr(section.config, "context");
+  if (!name && !section.body) return null;
+  return (
+    <section className="section">
+      <div className="container-page">
+        <div className="mx-auto grid max-w-5xl items-center gap-10 overflow-hidden rounded-[2rem] border border-line bg-surface p-6 sm:p-10 md:grid-cols-[0.8fr_1.2fr] lg:gap-14 lg:p-14">
+          <div className="relative mx-auto w-full max-w-[250px] sm:max-w-[320px]">
+            <div className="absolute -right-4 -top-4 h-full w-full rounded-[1.75rem] border border-accent/60" aria-hidden="true" />
+            {section.imageUrl ? (
+              <img src={section.imageUrl} alt={cfgStr(section.config, "imageAlt") || `Fotografia de ${name}`} className="relative aspect-[4/5] w-full rounded-[1.75rem] object-cover" loading="lazy" />
+            ) : (
+              <div className="relative grid aspect-[4/5] w-full place-items-center rounded-[1.75rem] bg-sand" role="img" aria-label={`Espaço para a fotografia de ${name}`}>
+                <span className="font-display text-7xl italic text-primary/70">{name.split(/\s+/).map((w) => w[0]).slice(0, 2).join("")}</span>
+              </div>
+            )}
+          </div>
+          <div>
+            <p className="eyebrow">{cfgStr(section.config, "eyebrow") || "Sobre a autora"}</p>
+            {name && <h2 className="mt-4 font-display text-[2.3rem] leading-[1.08] text-ink sm:text-5xl">{name}</h2>}
+            {role && <p className="mt-2 text-sm font-semibold uppercase tracking-[0.14em] text-secondary">{role}</p>}
+            {section.body && <RichText text={section.body} className="mt-6 text-[1.0625rem] leading-relaxed text-ink/85" />}
+            {context && <p className="mt-6 border-l-2 border-accent pl-5 font-display text-xl italic leading-snug text-ink/90">{context}</p>}
+          </div>
+        </div>
       </div>
     </section>
   );

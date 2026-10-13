@@ -4,16 +4,11 @@ Operação de vendas completa do produto digital educativo **Além da Fome**: la
 
 Base técnica: **HAMA BEADS** (admin, pedidos, PIX, webhook, crediário, cupons, testes A/B, relatórios, ROAS, comportamento, online agora) + **ClearFinger** (imagens no banco com upload por arquivo **ou** link, camada de segurança anti-robô). Auditoria completa em [docs/RELATORIO.md](docs/RELATORIO.md).
 
-## Planos
-| Plano | Preço inicial | Entrega |
-|---|---|---|
-| Além da Fome — E-book | R$ 67,00 | materiais do e-book |
-| Além da Fome Completo — E-book + Curso + Comunidade | R$ 97,00 | materiais próprios **+** os do E-book (produto "já incluso") |
-
-Preço, capa, textos e materiais de cada plano: **Admin → Produtos e materiais**.
+## Oferta
+Oferta única: **Além da Fome — E-book**, R$ 67,00 (preço, capa, textos e materiais em **Admin → Produtos e materiais**). O antigo plano "Completo" fica desativado: não aparece e o checkout recusa (pedidos antigos preservados).
 
 ## Fluxo
-Anúncio → **/quiz** (consentimento → 5 perguntas → nome/e-mail → resultado editorial) → **/** (landing personalizada) → **/checkout** (PIX) → **/pedido/[número]?t=…** (PIX, upsell e área de acesso aos materiais).
+Anúncio → **/** (o quiz abre direto: consentimento → 5 perguntas → e-mail opcional → resultado com reflexão e exercício) → **/e-book** (página de vendas) → **/checkout** (PIX) → **/pedido/[número]?t=…** (PIX, upsell e área de acesso). A rota `/quiz` continua funcionando.
 
 Regras de honestidade aplicadas no código:
 - Material só aparece na landing e só é vendido/entregue quando está **Pronto** (arquivo enviado ou link). Sem material pronto, o checkout recusa a venda.
@@ -27,16 +22,17 @@ Regras de honestidade aplicadas no código:
 npm install
 cp .env.example .env              # DATABASE_URL, AUTH_SECRET, CRON_SECRET, BRAVOPAY_MODE=mock, EMAIL_PROVIDER=console…
 npx prisma migrate deploy
-npm run db:seed                   # planos, landing, FAQ, quiz publicado
+npm run db:seed                   # produto, landing, FAQ, quiz publicado (também roda no build da Vercel)
 npm run admin:hash -- "senha-forte-12+"   # cole em ADMIN_PASSWORD_HASH (+ ADMIN_EMAIL)
 npm run dev                       # http://localhost:3000 · admin em /admin
 ```
 
 ## Testes
 ```bash
-npm run typecheck && npm run lint && npm test            # tipos, lint, 19 testes unitários
+npm run typecheck && npm run lint && npm test            # tipos, lint, 20 testes unitários
 npm run build:local && VERCEL_ENV=preview npx next start -p 3217
-npx tsx scripts/e2e-funnel.ts http://localhost:3217      # ponta a ponta (BRAVOPAY_MODE=mock!) — 11 verificações
+npx tsx scripts/e2e-funnel.ts http://localhost:3217      # ponta a ponta (BRAVOPAY_MODE=mock!) — 12 verificações
+npx tsx scripts/quiz-flow.ts http://localhost:3217       # navegador: quiz, voltar, resultado, /e-book (390 e 1440 px)
 ```
 > Nunca rode o E2E contra produção com a BravoPay real.
 

@@ -31,9 +31,9 @@ export function Footer({ s }: { s: Settings }) {
         <nav aria-label="Produto">
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-accent">Produto</p>
           <ul className="mt-4 space-y-2.5 text-sm">
-            <li><Link href="/#conteudo-incluido" className="hover:text-bg">O que você recebe</Link></li>
-            <li><Link href="/quiz" className="hover:text-bg">Fazer o quiz</Link></li>
-            <li><Link href="/#faq" className="hover:text-bg">Perguntas frequentes</Link></li>
+            <li><Link href="/e-book#conteudo-do-ebook" className="hover:text-bg">O e-book</Link></li>
+            <li><Link href="/" className="hover:text-bg">Fazer o quiz</Link></li>
+            <li><Link href="/e-book#faq" className="hover:text-bg">Perguntas frequentes</Link></li>
             <li><Link href="/acesso" className="hover:text-bg">Meu acesso</Link></li>
           </ul>
         </nav>

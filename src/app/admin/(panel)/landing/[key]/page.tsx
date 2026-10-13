@@ -15,7 +15,7 @@ const label = "mb-1 text-xs font-semibold uppercase tracking-wide text-slate-500
 
 /** O que cada tipo usa (os demais campos ficam ocultos para não confundir). */
 const USES: Record<string, { body?: string; image?: string; cta?: boolean; video?: boolean }> = {
-  hero: { image: "Foto da primeira tela (humanizada, real)", cta: true },
+  hero: { image: "Imagem da primeira tela (vazio = capa do produto em composição de livro)", cta: true },
   identification: { body: "Texto emocional (parágrafos)" },
   patterns: { body: "Nota de rodapé (ex.: \"é uma possibilidade de reflexão, não diagnóstico\")" },
   method: { body: "Observação abaixo dos pilares" },
@@ -30,6 +30,9 @@ const USES: Record<string, { body?: string; image?: string; cta?: boolean; video
   limits: { body: "Texto do aviso (o que o produto NÃO é)" },
   faq: {},
   final_cta: { cta: true },
+  topics: { body: "Observação abaixo dos tópicos" },
+  showcase: { body: "Descrição do formato digital", image: "Mockup do e-book (vazio = capa do produto em composição de livro)", cta: true },
+  author: { body: "Biografia (use **negrito** e *itálico*)", image: "Fotografia autêntica da autora" },
 };
 
 export default async function EditSectionPage({ params }: { params: Promise<{ key: string }> }) {
@@ -42,14 +45,14 @@ export default async function EditSectionPage({ params }: { params: Promise<{ ke
 
   return (
     <div>
-      <PageHeader title={section.label} description={`Tipo: ${SECTION_TYPES[t as SectionType] ?? t}`} actions={<Link href="/" target="_blank" className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium">Ver landing</Link>} />
+      <PageHeader title={section.label} description={`Tipo: ${SECTION_TYPES[t as SectionType] ?? t}`} actions={<Link href="/e-book" target="_blank" className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium">Ver landing</Link>} />
       <ActionForm action={saveSection} className="space-y-6">
         <input type="hidden" name="key" value={section.key} />
         <Card title="Conteúdo">
           <div className="grid gap-4 md:grid-cols-2">
             <label className="flex items-center gap-2 text-sm font-medium md:col-span-2"><input type="checkbox" name="active" defaultChecked={section.active} className="h-4 w-4" /> Seção ativa</label>
             <Field label="Chamada acima do título (opcional)"><input name="cfg_eyebrow" defaultValue={s(c.eyebrow)} className={inputCls} /></Field>
-            <div />
+            <Field label="Âncora (opcional)" hint="Ex.: como-funciona — usado em links #como-funciona"><input name="cfg_anchor" defaultValue={s(c.anchor)} className={inputCls} /></Field>
             <Field label="Título" className="md:col-span-2" hint={t === "hero" || t === "final_cta" ? "Use *asteriscos* para destacar um trecho em itálico." : undefined}><input name="title" defaultValue={section.title ?? ""} className={inputCls} /></Field>
             <Field label="Subtítulo" className="md:col-span-2"><textarea name="subtitle" rows={2} defaultValue={section.subtitle ?? ""} className={textareaCls} /></Field>
             {u.body && (
@@ -66,7 +69,7 @@ export default async function EditSectionPage({ params }: { params: Promise<{ ke
           </div>
         </Card>
 
-        {["hero", "identification", "patterns", "experience", "method", "trust", "audience", "offer", "video"].includes(t) && (
+        {["hero", "identification", "patterns", "experience", "method", "trust", "audience", "offer", "video", "topics", "showcase", "author"].includes(t) && (
           <Card title="Itens da seção">
             <div className="grid gap-4 md:grid-cols-2">
               {t === "hero" && (
@@ -98,9 +101,9 @@ export default async function EditSectionPage({ params }: { params: Promise<{ ke
                   <Field label="Descrição da imagem (acessibilidade)"><input name="cfg_imageAlt" defaultValue={s(c.imageAlt)} className={inputCls} /></Field>
                 </>
               )}
-              {(t === "method" || t === "trust") && (
+              {(t === "method" || t === "trust" || t === "topics") && (
                 <div className="md:col-span-2">
-                  <p className={label}>{t === "method" ? "Pilares" : "Itens de confiança (suporte, pagamento seguro, privacidade…) — a autoria vem de Configurações → Autoria"}</p>
+                  <p className={label}>{t === "topics" ? "Tópicos do e-book (use os títulos reais do sumário)" : t === "method" ? "Pilares" : "Itens de confiança (suporte, pagamento seguro, privacidade…) — a autoria vem de Configurações → Autoria"}</p>
                   <IconItemsEditor name="cfg_items" defaultValue={arr(c.items)} />
                 </div>
               )}
@@ -118,6 +121,24 @@ export default async function EditSectionPage({ params }: { params: Promise<{ ke
                   <StringListEditor name="cfg_includes" defaultValue={arr<string>(c.includes)} addLabel="Adicionar item" />
                   <p className="mt-2 text-xs text-slate-500">Preço, capa e nome vêm do produto principal (Produtos). Garantia: Configurações → Vendas.</p>
                 </div>
+              )}
+              {t === "showcase" && (
+                <>
+                  <div className="md:col-span-2">
+                    <p className={label}>Formato e entrega (somente o que for verdade)</p>
+                    <StringListEditor name="cfg_formatItems" defaultValue={arr<string>(c.formatItems)} addLabel="Adicionar item" />
+                  </div>
+                  <Field label="Título da prévia de páginas" hint="As prévias são as imagens da Galeria — envie só páginas reais do e-book."><input name="cfg_previewTitle" defaultValue={s(c.previewTitle)} placeholder="Prévia de páginas internas" className={inputCls} /></Field>
+                  <Field label="Descrição do mockup (acessibilidade)"><input name="cfg_imageAlt" defaultValue={s(c.imageAlt)} className={inputCls} /></Field>
+                </>
+              )}
+              {t === "author" && (
+                <>
+                  <Field label="Nome"><input name="cfg_name" defaultValue={s(c.name)} className={inputCls} /></Field>
+                  <Field label="Linha abaixo do nome (opcional)"><input name="cfg_role" defaultValue={s(c.role)} className={inputCls} /></Field>
+                  <Field label="Texto de contexto (relação com o tema)" className="md:col-span-2"><textarea name="cfg_context" rows={3} defaultValue={s(c.context)} className={textareaCls} /></Field>
+                  <Field label="Descrição da foto (acessibilidade)" className="md:col-span-2"><input name="cfg_imageAlt" defaultValue={s(c.imageAlt)} placeholder="Fotografia de Geneen Roth" className={inputCls} /></Field>
+                </>
               )}
               {t === "video" && (
                 <label className="flex items-center gap-2 text-sm font-medium"><input type="checkbox" name="cfg_vertical" defaultChecked={s(c.vertical) === "true"} className="h-4 w-4" /> Vídeo vertical (9:16)</label>

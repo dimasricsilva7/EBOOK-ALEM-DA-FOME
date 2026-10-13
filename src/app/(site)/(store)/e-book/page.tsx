@@ -1,5 +1,7 @@
+import type { Metadata } from "next";
 import { Fragment } from "react";
-import { Audience, Content, Experience, Faq, FinalCta, GallerySection, Hero, Identification, Limits, Method, Offer, Patterns, Reviews, Trust, Video, type LandingCtx } from "@/components/landing/Sections";
+import { Audience, Author, Content, Experience, Faq, FinalCta, GallerySection, Hero, Identification, Limits, Method, Offer, Patterns, Reviews, Showcase, Topics, Trust, Video, type LandingCtx } from "@/components/landing/Sections";
+import { cfgStr } from "@/server/landing";
 import { LandingTracker, QuizWelcome, StickyMobileCTA } from "@/components/landing/client";
 import { valueFor } from "@/lib/experiments";
 import { crediarioConfig, installmentOptions } from "@/lib/crediario";
@@ -12,6 +14,11 @@ import { getSettings, isOn } from "@/server/settings";
 import { formatBRL } from "@/utils/format";
 
 export const dynamic = "force-dynamic";
+export const metadata: Metadata = {
+  title: { absolute: "Além da Fome — E-book | olhe além da fome" },
+  description: "E-book educativo para reconhecer padrões, compreender melhor suas emoções e explorar formas mais conscientes de cuidar de si — sem culpa e sem regras rígidas.",
+  alternates: { canonical: "/e-book" },
+};
 
 function orderSections(sections: SectionData[], override: string | null) {
   if (!override) return sections;
@@ -75,7 +82,13 @@ export default async function LandingPage() {
     limits: Limits,
     faq: Faq,
     final_cta: FinalCta,
+    topics: Topics,
+    showcase: Showcase,
+    author: Author,
   };
+  // Âncoras para os botões e o menu (#como-funciona, #conteudo-do-ebook, #autora…); oferta e FAQ já têm id próprio
+  const DEFAULT_ANCHOR: Record<string, string> = { topics: "conteudo-do-ebook", author: "autora", showcase: "o-ebook", audience: "para-quem" };
+  const anchorFor = (x: SectionData) => (x.type === "offer" || x.type === "faq" ? "" : cfgStr(x.config, "anchor") || DEFAULT_ANCHOR[x.type] || "");
   const heroOverride = (x: SectionData): SectionData =>
     x.type === "hero" ? { ...x, title: valueFor(assignments, "hero_headline") ?? x.title, ctaLabel: valueFor(assignments, "hero_cta") ?? x.ctaLabel, imageUrl: valueFor(assignments, "hero_image") ?? x.imageUrl } : x;
 
@@ -84,7 +97,7 @@ export default async function LandingPage() {
   const jsonLd = [
     { "@context": "https://schema.org", "@type": "WebSite", name: s.store_name, url: base },
     ...(planList.length
-      ? planList.map((product) => ({ "@context": "https://schema.org", "@type": "Product", name: product.name, description: product.shortDescription ?? undefined, sku: product.sku, brand: { "@type": "Brand", name: s.store_name }, ...(product.imageUrl ? { image: product.imageUrl } : {}), offers: { "@type": "Offer", url: `${base}/#oferta`, priceCurrency: "BRL", price: (product.priceCents / 100).toFixed(2), availability: ctx.salesOpen ? "https://schema.org/InStock" : "https://schema.org/PreOrder" } }))
+      ? planList.map((product) => ({ "@context": "https://schema.org", "@type": "Product", name: product.name, description: product.shortDescription ?? undefined, sku: product.sku, brand: { "@type": "Brand", name: s.store_name }, ...(product.imageUrl ? { image: product.imageUrl } : {}), offers: { "@type": "Offer", url: `${base}/e-book#oferta`, priceCurrency: "BRL", price: (product.priceCents / 100).toFixed(2), availability: ctx.salesOpen ? "https://schema.org/InStock" : "https://schema.org/PreOrder" } }))
       : []),
     ...(ctx.faqs.length ? [{ "@context": "https://schema.org", "@type": "FAQPage", mainEntity: ctx.faqs.map((f) => ({ "@type": "Question", name: f.question, acceptedAnswer: { "@type": "Answer", text: f.answer.replace(/\[([^\]]+)\]\([^)]+\)/g, "$1") } })) }] : []),
   ];
@@ -94,7 +107,16 @@ export default async function LandingPage() {
       <QuizWelcome texts={resultTexts} />
       {sections.map((x) => {
         const C = RENDER[x.type];
-        return C ? <Fragment key={x.key}>{C({ section: heroOverride(x), ctx })}</Fragment> : null;
+        if (!C) return null;
+        const anchor = anchorFor(x);
+        const node = C({ section: heroOverride(x), ctx });
+        return anchor ? (
+          <div key={x.key} id={anchor} className="scroll-mt-20">
+            {node}
+          </div>
+        ) : (
+          <Fragment key={x.key}>{node}</Fragment>
+        );
       })}
       <LandingTracker product={product ? { id: product.id, sku: product.sku, name: product.name, priceCents: product.priceCents } : null} />
       {isOn(s.sticky_cta_enabled) && product && <StickyMobileCTA label={`${s.sticky_cta_label || "Quero conhecer"} · ${planList.length > 1 ? "a partir de " : ""}${formatBRL(Math.min(...planList.map((x) => x.priceCents)))}`} />}

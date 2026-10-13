@@ -43,7 +43,7 @@ export async function buildDraftQuiz(): Promise<QuizData> {
         required: q.required,
         options: q.options.map((o) => ({ id: o.id, label: o.label, resultKey: o.resultKey, weight: o.weight, nextQuestionId: o.nextQuestionId })),
       })),
-    results: results.map((r) => ({ key: r.key, title: r.title, subtitle: r.subtitle, body: r.body, points: asArray<string>(r.points).filter(Boolean), ctaLabel: r.ctaLabel, ctaTarget: r.ctaTarget })),
+    results: results.map((r) => ({ key: r.key, title: r.title, subtitle: r.subtitle, body: r.body, points: asArray<string>(r.points).filter(Boolean), reflection: r.reflection, exercise: r.exercise, ctaLabel: r.ctaLabel, ctaTarget: r.ctaTarget })),
     texts,
   };
 }

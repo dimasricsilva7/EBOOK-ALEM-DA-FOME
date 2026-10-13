@@ -335,7 +335,7 @@ export function CheckoutClient({
       <div className="container-page max-w-lg py-24 text-center">
         <h1 className="h-section">Seu pedido está vazio</h1>
         <p className="lead mt-4">Conheça o Além da Fome e volte quando quiser.</p>
-        <Link href="/#oferta" className="btn-primary mt-8">Conhecer o Além da Fome</Link>
+        <Link href="/e-book#oferta" className="btn-primary mt-8">Conhecer o e-book</Link>
       </div>
     );
   }
