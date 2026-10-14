@@ -44,6 +44,8 @@
     border-radius: 6px;
   }
   [id] { scroll-margin-top: 5rem; }
+  /* Animações desligadas no admin (Configurações → Aparência) */
+  [data-motion="off"] *, [data-motion="off"] *::before, [data-motion="off"] *::after { animation: none !important; transition-duration: .01ms !important; }
   @media (prefers-reduced-motion: reduce) {
     html { scroll-behavior: auto; }
     *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
@@ -60,7 +62,9 @@
 
   /* Botões — alvo de toque ≥ 48px */
   .btn { @apply inline-flex min-h-[54px] items-center justify-center gap-2 rounded-bead px-7 text-[15px] font-semibold tracking-[0.01em] transition duration-200 active:scale-[0.99] disabled:pointer-events-none disabled:opacity-50; }
-  .btn-primary { @apply btn bg-primary text-white shadow-soft hover:bg-[rgb(var(--c-primary)/0.92)]; }
+  .btn-primary { @apply btn bg-primary text-white shadow-soft hover:-translate-y-px hover:bg-[rgb(var(--c-primary)/0.94)] hover:shadow-lift; }
+  .btn > svg:last-child { transition: transform .2s ease; }
+  .btn:hover > svg:last-child { transform: translateX(3px); }
   .btn-accent { @apply btn-primary; }
   .btn-dark { @apply btn bg-ink text-bg hover:bg-[rgb(var(--c-ink)/0.9)]; }
   .btn-light { @apply btn border border-ink/15 bg-surface text-ink hover:border-ink/35; }

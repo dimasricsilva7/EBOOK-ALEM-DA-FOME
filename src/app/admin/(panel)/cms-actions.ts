@@ -24,6 +24,22 @@ const steps = (fd: FormData, k: string) =>
     .slice(0, 10)
     .map((s) => ({ title: String(s.title).slice(0, 90), text: String(s.text ?? "").slice(0, 400) }));
 
+const isIcon = (v: unknown) => ((ICONS as readonly string[]).includes(String(v ?? "")) ? String(v) : "leaf");
+const safeImg = (v: unknown) => {
+  const x = String(v ?? "").trim();
+  return /^(https:\/\/|\/)/.test(x) ? x.slice(0, 500) : "";
+};
+const cards = (fd: FormData, k: string) =>
+  jsonArray<{ icon?: string; title?: string; text?: string; image?: string; alt?: string }>(fd, k)
+    .filter((c) => c?.title)
+    .slice(0, 4)
+    .map((c) => ({ icon: isIcon(c.icon), title: String(c.title).slice(0, 140), text: String(c.text ?? "").slice(0, 300), image: safeImg(c.image), alt: String(c.alt ?? "").slice(0, 160) }));
+const detailSteps = (fd: FormData, k: string) =>
+  jsonArray<{ icon?: string; title?: string; text?: string; detail?: string }>(fd, k)
+    .filter((s) => s?.title)
+    .slice(0, 6)
+    .map((s) => ({ icon: isIcon(s.icon), title: String(s.title).slice(0, 60), text: String(s.text ?? "").slice(0, 240), detail: String(s.detail ?? "").slice(0, 600) }));
+
 /** Campos específicos de cada tipo de seção → `config`. */
 function parseConfig(type: string, fd: FormData, prev: Record<string, unknown>): Record<string, unknown> {
   const c: Record<string, unknown> = { ...prev };
@@ -37,7 +53,10 @@ function parseConfig(type: string, fd: FormData, prev: Record<string, unknown>):
       c.secondaryTarget = str(fd, "cfg_secondaryTarget", 200);
       break;
     case "identification":
-      c.items = stringList(fd, "cfg_items").slice(0, 10);
+      c.items = cards(fd, "cfg_items");
+      break;
+    case "cycle":
+      c.steps = detailSteps(fd, "cfg_steps");
       break;
     case "patterns":
     case "experience":
@@ -50,17 +69,20 @@ function parseConfig(type: string, fd: FormData, prev: Record<string, unknown>):
     case "method":
     case "trust":
     case "topics":
+    case "facts":
       c.items = iconItems(fd, "cfg_items");
       break;
     case "showcase":
       c.formatItems = stringList(fd, "cfg_formatItems").slice(0, 8);
       c.previewTitle = str(fd, "cfg_previewTitle", 80);
+      c.excerpts = stringList(fd, "cfg_excerpts").slice(0, 3).map((t) => t.slice(0, 280));
       c.imageAlt = str(fd, "cfg_imageAlt", 160);
       break;
     case "author":
       c.name = str(fd, "cfg_name", 80);
       c.role = str(fd, "cfg_role", 120);
       c.context = str(fd, "cfg_context", 600);
+      c.confirmed = bool(fd, "cfg_confirmed") ? "true" : "false";
       c.imageAlt = str(fd, "cfg_imageAlt", 160);
       break;
     case "audience":
@@ -71,6 +93,7 @@ function parseConfig(type: string, fd: FormData, prev: Record<string, unknown>):
       break;
     case "offer":
       c.includes = stringList(fd, "cfg_includes").slice(0, 8);
+      c.steps = steps(fd, "cfg_steps").slice(0, 3);
       break;
     case "video":
       c.vertical = bool(fd, "cfg_vertical") ? "true" : "false";

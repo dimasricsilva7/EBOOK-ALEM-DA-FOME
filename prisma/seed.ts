@@ -11,7 +11,7 @@ import { PrismaClient, type Prisma } from "@prisma/client";
 
 const db = new PrismaClient();
 const j = (v: unknown) => v as Prisma.InputJsonValue;
-const CONTENT_VERSION = 2;
+const CONTENT_VERSION = 3;
 
 const QUIZ_TEXTS = {
   introEyebrow: "Um momento só seu",
@@ -72,7 +72,7 @@ async function disableCompleteOffer() {
   await db.product.updateMany({ where: { slug: "alem-da-fome-ebook", priceCents: { lte: 0 } }, data: { priceCents: 6700 } });
 }
 
-// ───────────── Landing ─────────────
+// ───────────── Landing (versão 3: visual, menos texto, compra direta) ─────────────
 
 const SECTIONS: Prisma.LandingSectionCreateInput[] = [
   {
@@ -84,117 +84,108 @@ const SECTIONS: Prisma.LandingSectionCreateInput[] = [
     subtitle:
       "Nem sempre é fácil entender por que determinados momentos do dia influenciam nossa relação com a comida. O estresse, o cansaço e as emoções podem fazer parte dessa experiência.\n\nO Além da Fome é um e-book educativo que convida você a reconhecer padrões, compreender melhor suas emoções e explorar formas mais conscientes de cuidar de si — sem culpa e sem regras rígidas.",
     ctaLabel: "Quero conhecer o e-book",
-    ctaTarget: "#oferta",
-    imageUrl: null,
-    config: j({ eyebrow: "E-book digital educativo", badges: ["Conteúdo educativo", "Pagamento seguro", "Acesso digital", "No seu ritmo"], secondaryLabel: "Entender como funciona", secondaryTarget: "#como-funciona", imageAlt: "" }),
+    ctaTarget: "checkout",
+    config: j({ eyebrow: "E-book digital educativo", badges: ["Leitura no seu ritmo", "Pagamento via PIX", "Acesso por e-mail"], secondaryLabel: "Descobrir meu ponto de partida", secondaryTarget: "/", imageAlt: "" }),
   },
   {
     key: "identificacao",
     type: "identification",
-    label: "Identificação",
+    label: "Identificação (cards)",
     sortOrder: 2,
-    title: "Às vezes, a vontade de comer chega junto com outras coisas.",
-    subtitle: "Cada pessoa vive isso de um jeito — e nem todas as situações abaixo vão fazer sentido para você. Veja se alguma delas soa familiar.",
-    body: "Perceber isso não significa que exista algo errado com você. É um sinal de que pode valer a pena observar a sua experiência com mais curiosidade — e menos cobrança.",
+    title: "Às vezes, entender o que acontece é um bom começo.",
+    subtitle: "Nem sempre é simples distinguir fome física, vontade de comer, hábito e busca por conforto. Observar esses momentos sem julgamento pode ajudar você a conhecer melhor a própria experiência.",
+    body: "Nada disso define quem você é. São pistas que podem ajudar você a se conhecer melhor.",
     config: j({
       eyebrow: "Talvez você se reconheça",
       items: [
-        "Depois de um dia de cansaço e sobrecarga, a comida parece o primeiro momento de pausa.",
-        "Em alguns momentos, comer vira uma forma de dar um respiro no meio de tudo.",
-        "Certos hábitos acontecem no automático, e você só percebe depois.",
-        "Depois de comer, às vezes aparece uma voz interna exigente ou crítica.",
-        "Você gostaria de entender melhor o que acontece com você nesses momentos.",
+        { icon: "moon", title: "Depois de um dia cansativo, a comida pode virar o momento de conforto.", text: "Quando o dia pesa, comer às vezes é a primeira pausa possível.", image: "", alt: "" },
+        { icon: "play", title: "Às vezes, comer vira uma forma de distração.", text: "No tédio ou na correria, a vontade aparece quase sem perceber.", image: "", alt: "" },
+        { icon: "spiral", title: "Nem sempre é fácil perceber os próprios padrões.", text: "Muitas vezes, só notamos o que aconteceu depois.", image: "", alt: "" },
+        { icon: "heart", title: "Depois de certas escolhas, pode surgir a autocobrança.", text: "E, junto com ela, a vontade de entender melhor o que está acontecendo.", image: "", alt: "" },
       ],
     }),
   },
   {
-    key: "olhar-alem",
-    type: "patterns",
-    label: "O que significa olhar além da fome",
+    key: "ciclo",
+    type: "cycle",
+    label: "Ciclo interativo",
     sortOrder: 3,
-    title: "O que significa olhar além da fome",
-    subtitle: "A relação com a comida não é feita só de fome física. Ela também envolve o contexto do dia, os hábitos, as emoções e a história de cada pessoa.",
-    body: "A proposta não é ignorar a fome física nem criar regras rígidas. É observar a sua experiência com mais consciência, para compreender o que você sente e do que precisa.",
+    title: "Um ciclo que vale a pena observar",
+    subtitle: "Uma forma simples de olhar para alguns momentos com a comida.",
+    body: "Este ciclo é uma possibilidade de reflexão, não uma regra nem um diagnóstico. Cada pessoa vive essas experiências de um jeito.",
     config: j({
       eyebrow: "Como funciona",
       anchor: "como-funciona",
       steps: [
-        { title: "Contexto", text: "Rotina, cansaço, pressão e o momento do dia podem influenciar quando e como a vontade de comer aparece." },
-        { title: "Hábitos", text: "Alguns comportamentos se repetem quase sem perceber. Reconhecê-los ajuda a escolher com mais consciência." },
-        { title: "Emoções", text: "Estresse, tristeza, tédio ou solidão podem fazer parte desses momentos — e merecem atenção, não julgamento." },
-        { title: "Experiências pessoais", text: "Sua história e suas vivências também moldam a forma como você se relaciona com a comida." },
+        { icon: "sun", title: "Situação", text: "Algo acontece: um dia corrido, uma cobrança, um momento de solidão.", detail: "Perceber o contexto — a hora do dia, o lugar, o cansaço — ajuda a reconhecer quando esses momentos costumam aparecer." },
+        { icon: "heart", title: "Emoção", text: "Surge uma sensação, às vezes sem nome: tensão, tristeza, tédio.", detail: "Dar nome ao que se sente já é uma forma de cuidado. Nem toda emoção precisa ser resolvida na hora; às vezes, ela só precisa ser notada." },
+        { icon: "hand", title: "Comportamento", text: "A comida aparece como uma resposta rápida e conhecida.", detail: "Não se trata de proibir ou controlar, e sim de perceber o que a comida está oferecendo naquele momento: pausa, conforto ou distração." },
+        { icon: "eye", title: "Reflexão posterior", text: "Depois, vem o que fica: alívio, culpa ou cobrança.", detail: "Olhar para esse momento com curiosidade, e não com julgamento, ajuda a entender o ciclo inteiro — e o que você precisa." },
       ],
     }),
   },
   {
     key: "topicos",
     type: "topics",
-    label: "O que você encontrará no e-book (ajuste ao sumário real)",
+    label: "O que é o Além da Fome (ajuste os temas ao sumário real)",
     sortOrder: 4,
-    title: "Conteúdos para compreender, não para se cobrar",
-    subtitle: "Temas apresentados de forma clara e acolhedora, para você ler e refletir no seu ritmo.",
+    title: "Um e-book educativo para olhar com mais atenção",
+    subtitle: "Um material de leitura e reflexão sobre a relação com a comida, as emoções, os hábitos e o autoconhecimento.",
+    body: "Sem dietas, sem regras rígidas e sem promessas de resultado: um convite para observar a sua experiência no seu próprio ritmo.",
     config: j({
-      eyebrow: "O que você encontrará no e-book",
+      eyebrow: "O que é o Além da Fome",
       items: [
-        { icon: "eye", title: "Reconhecer seus padrões", text: "Observar em quais situações a vontade de comer aparece além da fome física, para compreender melhor o seu dia a dia." },
-        { icon: "heart", title: "Emoções e comida", text: "Entender como estresse, cansaço e emoções podem fazer parte da sua relação com a comida — sem rótulos e sem culpa." },
-        { icon: "compass", title: "Fome do corpo e outras necessidades", text: "Perceber os sinais de fome física e diferenciá-los de outras necessidades, como descanso, pausa ou acolhimento." },
-        { icon: "hand", title: "Menos julgamento, mais gentileza", text: "Refletir sobre a autocobrança e experimentar uma forma mais gentil de olhar para si mesma." },
-        { icon: "leaf", title: "Um cuidado mais consciente", text: "Explorar formas mais conscientes de cuidar de si, sem regras rígidas e respeitando o seu ritmo." },
+        { icon: "eye", title: "Reconhecer seus padrões", text: "Observar em quais situações a vontade de comer aparece além da fome física." },
+        { icon: "heart", title: "Emoções e comida", text: "Entender como estresse, cansaço e emoções podem fazer parte da sua relação com a comida." },
+        { icon: "compass", title: "Fome do corpo e outras necessidades", text: "Perceber os sinais de fome física e diferenciá-los de necessidades como descanso, pausa ou acolhimento." },
+        { icon: "hand", title: "Menos julgamento, mais gentileza", text: "Refletir sobre a autocobrança e experimentar um olhar mais gentil para si mesma." },
+        { icon: "leaf", title: "Um cuidado mais consciente", text: "Explorar formas mais conscientes de cuidar de si, respeitando o seu ritmo." },
       ],
     }),
   },
   {
     key: "produto",
     type: "showcase",
-    label: "Apresentação do e-book",
+    label: "Por dentro do e-book (galeria)",
     sortOrder: 5,
-    title: "Um e-book para ler no seu ritmo",
-    body: "O Além da Fome é um e-book digital educativo. Depois da confirmação do pagamento, você recebe o acesso por e-mail e pode ler pelo celular, tablet ou computador, no seu tempo.",
+    title: "Veja o que você vai receber",
+    body: "O Além da Fome é um e-book digital. Depois da confirmação do pagamento, o acesso chega por e-mail e você pode ler no celular, tablet ou computador.",
     ctaLabel: "Quero o e-book",
-    ctaTarget: "#oferta",
+    ctaTarget: "checkout",
     config: j({
-      eyebrow: "O produto",
-      formatItems: ["E-book digital (PDF)", "Leitura no celular, tablet ou computador", "Acesso enviado por e-mail após a confirmação do pagamento", "Link também disponível na página do seu pedido"],
-      previewTitle: "Prévia de páginas internas",
+      eyebrow: "Por dentro do e-book",
+      formatItems: ["E-book digital (PDF)", "Leia no celular, tablet ou computador", "Acesso por e-mail após o pagamento", "Link também na página do pedido"],
+      previewTitle: "Folheie algumas páginas",
+      excerpts: [],
     }),
   },
   {
     key: "autora",
     type: "author",
-    label: "Sobre a autora",
+    label: "Sobre a autora (só aparece com autoria confirmada)",
     sortOrder: 6,
     title: "Geneen Roth",
     body:
       "**Geneen Roth** é escritora bestseller, palestrante e pioneira na abordagem da alimentação emocional e do *mindful eating*. Autora de obras que exploram a relação entre comida, emoções, corpo e autoaceitação, Geneen utiliza sua própria jornada e décadas de experiência em retiros para convidar leitores a refletirem sobre seus hábitos alimentares com mais consciência e menos culpa.",
     imageUrl: null,
-    config: j({
-      eyebrow: "Sobre a autora",
-      name: "Geneen Roth",
-      role: "",
-      context: "O convite que atravessa o seu trabalho é trocar a culpa pela curiosidade — e olhar para a comida como uma porta de entrada para compreender o que se sente.",
-      imageAlt: "Fotografia de Geneen Roth",
-    }),
+    config: j({ eyebrow: "Sobre a autora", name: "Geneen Roth", role: "", context: "", imageAlt: "Fotografia de Geneen Roth", confirmed: "false" }),
   },
   {
-    key: "para-quem",
-    type: "audience",
-    label: "Para quem é",
+    key: "o-que-esperar",
+    type: "method",
+    label: "O que você pode esperar",
     sortOrder: 7,
-    title: "Para quem o Além da Fome pode fazer sentido",
+    title: "Um convite à reflexão, no seu ritmo",
+    subtitle: "O valor do e-book está nas perguntas e reflexões que ele propõe — sem promessas de resultado.",
+    body: "O e-book é educativo e não substitui acompanhamento médico, psicológico ou nutricional.",
     config: j({
-      forYouTitle: "Pode fazer sentido se você…",
-      forYou: [
-        "Deseja compreender melhor a relação entre emoções e alimentação.",
-        "Quer observar os seus hábitos do dia a dia com mais atenção.",
-        "Busca uma abordagem educativa e acolhedora, sem dietas e sem culpa.",
-        "Quer começar uma reflexão no seu próprio ritmo.",
-      ],
-      notForYouTitle: "Importante saber",
-      notForYou: [
-        "O e-book é educativo e não substitui atendimento psicológico, nutricional ou médico.",
-        "Não é dieta, plano alimentar nem promessa de emagrecimento.",
-        "Se você vive sofrimento intenso ou sente com frequência que perdeu o controle, procure um profissional de saúde. Em situação de crise, ligue 188 (CVV, gratuito, 24h).",
+      eyebrow: "O que você pode esperar",
+      items: [
+        { icon: "compass", title: "Refletir sobre o que influencia sua relação com a comida", text: "Situações, contextos e momentos do dia que fazem diferença." },
+        { icon: "eye", title: "Observar emoções e hábitos com mais atenção", text: "Notar o que acontece antes, durante e depois." },
+        { icon: "spiral", title: "Reconhecer padrões sem transformar isso em culpa", text: "Curiosidade no lugar do julgamento." },
+        { icon: "pen", title: "Encontrar perguntas úteis para se conhecer", text: "Reflexões para levar para o seu dia a dia." },
+        { icon: "leaf", title: "Começar a cuidar de si de forma mais consciente", text: "Sem regras rígidas, respeitando o seu tempo." },
       ],
     }),
   },
@@ -204,37 +195,67 @@ const SECTIONS: Prisma.LandingSectionCreateInput[] = [
     label: "Oferta",
     sortOrder: 8,
     title: "Comece hoje, no seu ritmo",
-    subtitle: "Um pagamento único, com acesso digital liberado após a confirmação do pagamento.",
-    ctaLabel: "Quero o e-book",
+    subtitle: "Um único pagamento. O acesso ao e-book é liberado depois da confirmação do pagamento.",
+    ctaLabel: "Quero acessar o e-book",
     body: "Além da Fome é um conteúdo educativo e não substitui acompanhamento psicológico, nutricional ou médico.",
-    config: j({ eyebrow: "Oferta", includes: [] }),
+    config: j({
+      eyebrow: "Oferta",
+      includes: ["E-book Além da Fome em formato digital (PDF)", "Acesso pela página do pedido e por e-mail"],
+      steps: [
+        { title: "Pagamento via PIX", text: "Você preenche seus dados e recebe o QR Code e o código copia e cola." },
+        { title: "Confirmação automática", text: "Assim que o pagamento é confirmado, o acesso é liberado." },
+        { title: "Leitura no seu ritmo", text: "O link chega por e-mail e também fica na página do seu pedido." },
+      ],
+    }),
   },
-  { key: "faq", type: "faq", label: "Perguntas frequentes", sortOrder: 9, title: "Perguntas frequentes", config: j({ eyebrow: "Dúvidas" }) },
+  {
+    key: "transparencia",
+    type: "facts",
+    label: "Transparência",
+    sortOrder: 9,
+    title: "Tudo o que você precisa saber antes de comprar",
+    config: j({
+      eyebrow: "Transparência",
+      items: [
+        { icon: "book", title: "O que você compra", text: "O e-book digital Além da Fome (PDF). Não inclui curso, comunidade ou bônus." },
+        { icon: "download", title: "Como recebe", text: "Depois da confirmação do pagamento, o acesso chega por e-mail e fica na página do pedido." },
+        { icon: "lock", title: "Preço", text: "{preco}, pagamento único via PIX. Sem mensalidade." },
+        { icon: "chat", title: "Suporte", text: "Dúvidas sobre acesso ou pagamento? [Fale com o suporte](/suporte)." },
+        { icon: "shield", title: "Termos e privacidade", text: "Consulte os [termos](/termos), a [privacidade](/politica-de-privacidade) e o [reembolso](/trocas-e-devolucoes)." },
+        { icon: "leaf", title: "Limites do material", text: "Conteúdo educativo: não diagnostica, não trata e não substitui acompanhamento profissional." },
+      ],
+    }),
+  },
+  { key: "faq", type: "faq", label: "Perguntas frequentes", sortOrder: 10, title: "Perguntas frequentes", config: j({ eyebrow: "Dúvidas" }) },
   {
     key: "cta-final",
     type: "final_cta",
     label: "CTA final",
-    sortOrder: 10,
-    title: "Você não precisa entender *tudo de uma vez*.",
-    subtitle: "Pode começar observando sua experiência com mais curiosidade e menos cobrança.",
-    ctaLabel: "Quero conhecer o Além da Fome",
-    ctaTarget: "#oferta",
+    sortOrder: 11,
+    title: "Você não precisa entender tudo de uma vez. *Pode começar observando.*",
+    subtitle: "O Além da Fome é um convite para olhar com mais atenção para sua relação com a comida, reconhecer padrões e abrir espaço para uma compreensão mais consciente de si.",
+    ctaLabel: "Quero conhecer o e-book",
+    ctaTarget: "checkout",
   },
 ];
 
-/** Seções da versão anterior que saem da página (ficam desativadas no admin, não são apagadas). */
-const RETIRED_SECTIONS = ["padroes", "metodo", "conteudo", "experiencia", "confianca", "depoimentos", "limites"];
+/** Seções de versões anteriores que saem da página (ficam desativadas no admin, não são apagadas). */
+const RETIRED_SECTIONS = ["padroes", "metodo", "conteudo", "experiencia", "confianca", "depoimentos", "limites", "olhar-alem", "para-quem"];
 
 const FAQS: [string, string][] = [
   ["O que é o Além da Fome?", "É um e-book digital educativo sobre a relação entre emoções e alimentação. Ele convida você a reconhecer padrões, compreender melhor suas emoções e explorar formas mais conscientes de cuidar de si — sem culpa e sem regras rígidas."],
-  ["O que está incluído?", "O e-book Além da Fome em formato digital (PDF). Esta oferta não inclui cursos, comunidade ou bônus."],
-  ["Como funciona o acesso?", "Depois que o pagamento é confirmado, o acesso é liberado automaticamente e você recebe um e-mail com o link da sua área de acesso. Se perder o link, peça um novo em [Meu acesso](/acesso)."],
-  ["Como o material é entregue?", "Pela sua área de acesso, onde você abre ou baixa o e-book para ler no celular, tablet ou computador. O link também fica disponível na página do seu pedido."],
-  ["Quais são as formas de pagamento?", "PIX, em pagamento único. O QR Code e o código copia e cola aparecem logo após você preencher seus dados, e a confirmação é feita automaticamente pelo sistema de pagamento."],
-  ["O e-book substitui acompanhamento profissional?", "Não. O Além da Fome é educativo: não diagnostica, não trata e não substitui psicoterapia, acompanhamento nutricional ou médico. Se você sente sofrimento intenso ou perda de controle frequente, procure um profissional de saúde."],
+  ["O que o e-book aborda?", "A relação entre emoções e alimentação, os hábitos do dia a dia, a autocobrança e formas mais conscientes de cuidar de si. Veja os temas em [O que é o Além da Fome](#conteudo-do-ebook)."],
+  ["Para quem o conteúdo pode ser relevante?", "Para quem deseja compreender melhor a relação entre emoções e alimentação, observar os próprios hábitos e começar uma reflexão no seu ritmo, com uma abordagem acolhedora e sem dietas."],
+  ["Como funciona o acesso?", "Depois que o pagamento é confirmado, o acesso é liberado automaticamente e você recebe um e-mail com o link da sua área de acesso, onde abre ou baixa o e-book. Se perder o link, peça um novo em [Meu acesso](/acesso)."],
+  ["Qual é o valor?", "{preco}, em pagamento único. Não há mensalidade nem cobrança recorrente."],
+  ["Como funciona o pagamento?", "Por PIX. O QR Code e o código copia e cola aparecem logo após você preencher seus dados, e a confirmação é feita automaticamente pelo sistema de pagamento."],
   ["E se eu me arrepender?", "Você pode desistir da compra em até 7 dias após o pagamento e receber o valor de volta, conforme o direito de arrependimento do Código de Defesa do Consumidor. É só escrever para o suporte informando o número do pedido."],
-  ["Como falo com o suporte?", "Pela página [Suporte](/suporte). Respondemos pelo e-mail que você informar."],
+  ["O e-book substitui acompanhamento profissional?", "Não. O Além da Fome é educativo: não diagnostica, não trata e não substitui psicoterapia, acompanhamento nutricional ou médico. Se você sente sofrimento intenso, procure um profissional de saúde. Em situação de crise, ligue 188 (CVV, gratuito, 24h)."],
+  ["Como entro em contato em caso de dúvidas?", "Pela página [Suporte](/suporte). Respondemos pelo e-mail que você informar."],
 ];
+
+/** Perguntas da versão 2 — se o FAQ ainda for exatamente esse, ele é atualizado; se foi editado no admin, fica como está. */
+const FAQ_V2_QUESTIONS = ["O que é o Além da Fome?", "O que está incluído?", "Como funciona o acesso?", "Como o material é entregue?", "Quais são as formas de pagamento?", "O e-book substitui acompanhamento profissional?", "E se eu me arrepender?", "Como falo com o suporte?"];
 
 // ───────────── Quiz ─────────────
 
@@ -367,17 +388,8 @@ async function freshContent() {
   if ((await db.quizVersion.count()) === 0) await publishQuiz();
 }
 
-/** Versão 2 do conteúdo: quiz na entrada, nova landing, oferta única, resultados com reflexão e exercício. */
-async function upgradeToV2() {
-  for (const s of SECTIONS) {
-    const { key, ...data } = s;
-    await db.landingSection.upsert({ where: { key }, update: { ...data, active: true }, create: s });
-  }
-  await db.landingSection.updateMany({ where: { key: { in: RETIRED_SECTIONS } }, data: { active: false } });
-
-  await db.faq.deleteMany({});
-  await db.faq.createMany({ data: FAQS.map(([question, answer], i) => ({ question, answer, sortOrder: i + 1 })) });
-
+/** Versão 2: quiz novo (perguntas, resultados com reflexão e exercício, e-mail opcional), produto e selo do PIX. */
+async function upgradeQuizV2() {
   for (const [i, r] of RESULTS.entries()) await db.quizResult.upsert({ where: { key: r.key }, update: resultData(r, i), create: resultData(r, i) });
   await db.quizResult.updateMany({ where: { key: { notIn: RESULTS.map((r) => r.key) } }, data: { active: false } });
   // Respostas já gravadas guardam o texto da pergunta/opção, então o histórico continua legível
@@ -388,7 +400,6 @@ async function upgradeToV2() {
   const prev = saved?.value && typeof saved.value === "object" && !Array.isArray(saved.value) ? (saved.value as Record<string, unknown>) : {};
   await db.setting.upsert({ where: { key: "quiz_texts_draft" }, update: { value: j({ ...prev, ...QUIZ_TEXTS }) }, create: { key: "quiz_texts_draft", value: j(QUIZ_TEXTS) } });
   await publishQuiz();
-
   await db.product.updateMany({
     where: { slug: "alem-da-fome-ebook" },
     data: {
@@ -402,6 +413,38 @@ async function upgradeToV2() {
   await db.setting.updateMany({ where: { key: "pix_badge", value: { equals: "confirmação na hora" } }, data: { value: j("") } });
 }
 
+/**
+ * Versão 3: landing visual (cards, ciclo interativo, galeria, transparência, compra direta).
+ * Preserva imagens já enviadas, a seção da autora (texto/foto; volta a exigir confirmação de autoria)
+ * e um FAQ que tenha sido editado no admin.
+ */
+async function upgradeLandingV3(from: number) {
+  for (const s of SECTIONS) {
+    const { key, ...data } = s;
+    const existing = await db.landingSection.findUnique({ where: { key } });
+    if (!existing) {
+      await db.landingSection.create({ data: s });
+      continue;
+    }
+    const prevCfg = (existing.config ?? {}) as Record<string, unknown>;
+    if (key === "autora") {
+      await db.landingSection.update({ where: { key }, data: { label: data.label, sortOrder: data.sortOrder, active: true, config: j({ ...prevCfg, confirmed: "false" }) } });
+      continue;
+    }
+    const nextCfg = { ...((data.config ?? {}) as Record<string, unknown>) };
+    if (key === "produto" && Array.isArray(prevCfg.excerpts) && prevCfg.excerpts.length) nextCfg.excerpts = prevCfg.excerpts;
+    await db.landingSection.update({ where: { key }, data: { ...data, config: j(nextCfg), imageUrl: existing.imageUrl ?? data.imageUrl ?? null, active: true } });
+  }
+  await db.landingSection.updateMany({ where: { key: { in: RETIRED_SECTIONS } }, data: { active: false } });
+
+  const faqs = await db.faq.findMany({ select: { question: true } });
+  const untouched = from < 2 || faqs.every((f) => FAQ_V2_QUESTIONS.includes(f.question));
+  if (untouched) {
+    await db.faq.deleteMany({});
+    await db.faq.createMany({ data: FAQS.map(([question, answer], i) => ({ question, answer, sortOrder: i + 1 })) });
+  }
+}
+
 async function main() {
   const isFresh = (await db.landingSection.count()) === 0;
   await product();
@@ -409,9 +452,12 @@ async function main() {
   const row = await db.setting.findUnique({ where: { key: "content_version" } });
   const current = isFresh ? 0 : Number(row?.value ?? 1);
   if (isFresh) await freshContent();
-  else if (current < 2) await upgradeToV2();
+  else {
+    if (current < 2) await upgradeQuizV2();
+    if (current < 3) await upgradeLandingV3(current);
+  }
   if (current < CONTENT_VERSION) await db.setting.upsert({ where: { key: "content_version" }, update: { value: j(String(CONTENT_VERSION)) }, create: { key: "content_version", value: j(String(CONTENT_VERSION)) } });
-  console.log(`Seed ok — oferta única E-book (R$ 67), conteúdo v${CONTENT_VERSION}${isFresh ? " (banco novo)" : current < 2 ? " (atualizado)" : " (já atualizado)"}.`);
+  console.log(`Seed ok — oferta única E-book (R$ 67), conteúdo v${CONTENT_VERSION}${isFresh ? " (banco novo)" : current < CONTENT_VERSION ? ` (atualizado de v${current})` : " (já atualizado)"}.`);
 }
 
 main()

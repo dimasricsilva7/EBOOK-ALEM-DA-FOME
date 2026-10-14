@@ -38,6 +38,7 @@ export const SETTING_DEFAULTS: Record<string, string> = {
   announcement_text: "",
   header_cta_label: "Quero conhecer",
   sticky_cta_enabled: "true",
+  landing_animations: "true",
   sticky_cta_label: "Quero conhecer o Além da Fome",
   footer_text: "Produto digital educativo. Não substitui acompanhamento psicológico, nutricional ou médico.",
   // Vendas — desligadas até haver material real pronto (o checkout também exige material READY)

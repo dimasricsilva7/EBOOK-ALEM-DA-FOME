@@ -40,6 +40,8 @@ const config: Config = {
         pop: { "0%": { transform: "scale(0.96)" }, "100%": { transform: "scale(1)" } },
         slidein: { from: { transform: "translateX(100%)" }, to: { transform: "none" } },
         slideup: { from: { transform: "translateY(100%)" }, to: { transform: "none" } },
+        float: { "0%, 100%": { transform: "translateY(0) rotate(-1.5deg)" }, "50%": { transform: "translateY(-10px) rotate(-0.5deg)" } },
+        bob: { "0%, 100%": { transform: "translateY(0)" }, "50%": { transform: "translateY(5px)" } },
       },
       animation: {
         rise: "rise .55s cubic-bezier(.2,.7,.2,1) both",
@@ -47,6 +49,8 @@ const config: Config = {
         pop: "pop .25s ease-out",
         slidein: "slidein .28s cubic-bezier(.2,.7,.2,1)",
         slideup: "slideup .28s cubic-bezier(.2,.7,.2,1)",
+        float: "float 7s ease-in-out infinite",
+        bob: "bob 2.4s ease-in-out infinite",
       },
     },
   },

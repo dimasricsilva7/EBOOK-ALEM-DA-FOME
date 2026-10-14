@@ -65,7 +65,8 @@ async function main() {
   assert.equal((await fetch(`${BASE}/quiz`, { headers: { "User-Agent": UA } })).status, 200, "/quiz continua funcionando");
   const sales = await (await fetch(`${BASE}/e-book`, { headers: { "User-Agent": UA } })).text();
   assert.ok(/67,00/.test(sales) && !sales.includes("Além da Fome Completo") && !/97,00/.test(sales), "/e-book mostra só o E-book de R$ 67");
-  assert.ok(sales.includes("Geneen Roth") && !sales.includes("confirmação na hora"), "seção da autora presente e sem PIX na hora");
+  assert.ok(!sales.includes("Geneen Roth") && !sales.includes("confirmação na hora"), "autoria não confirmada não é publicada; sem PIX na hora");
+  assert.ok(sales.includes("Um ciclo que vale a pena observar") && sales.includes("Tudo o que você precisa saber"), "seções novas presentes");
   assert.equal(completo.active, false, "plano Completo desativado");
   const oldOffer = await post("/api/checkout", { checkoutToken: rid(32), customer: { name: "Teste Completo", email: "completo@example.com", phone: "11987654321", cpf: "52998224725" }, items: [{ productId: completo.id, quantity: 1 }], elapsedMs: 9000 });
   assert.notEqual(oldOffer.status, 200, "oferta Completo não pode ser comprada por rotas antigas");

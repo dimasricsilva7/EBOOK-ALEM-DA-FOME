@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Fragment } from "react";
-import { Audience, Author, Content, Experience, Faq, FinalCta, GallerySection, Hero, Identification, Limits, Method, Offer, Patterns, Reviews, Showcase, Topics, Trust, Video, type LandingCtx } from "@/components/landing/Sections";
+import { Audience, Author, Content, Cycle, Facts, Experience, Faq, FinalCta, GallerySection, Hero, Identification, Limits, Method, Offer, Patterns, Reviews, Showcase, Topics, Trust, Video, type LandingCtx } from "@/components/landing/Sections";
 import { cfgStr } from "@/server/landing";
 import { LandingTracker, QuizWelcome, StickyMobileCTA } from "@/components/landing/client";
 import { valueFor } from "@/lib/experiments";
@@ -85,9 +85,11 @@ export default async function LandingPage() {
     topics: Topics,
     showcase: Showcase,
     author: Author,
+    cycle: Cycle,
+    facts: Facts,
   };
   // Âncoras para os botões e o menu (#como-funciona, #conteudo-do-ebook, #autora…); oferta e FAQ já têm id próprio
-  const DEFAULT_ANCHOR: Record<string, string> = { topics: "conteudo-do-ebook", author: "autora", showcase: "o-ebook", audience: "para-quem" };
+  const DEFAULT_ANCHOR: Record<string, string> = { identification: "identificacao", cycle: "como-funciona", topics: "conteudo-do-ebook", showcase: "por-dentro", author: "autora", method: "o-que-esperar", facts: "transparencia", audience: "para-quem" };
   const anchorFor = (x: SectionData) => (x.type === "offer" || x.type === "faq" ? "" : cfgStr(x.config, "anchor") || DEFAULT_ANCHOR[x.type] || "");
   const heroOverride = (x: SectionData): SectionData =>
     x.type === "hero" ? { ...x, title: valueFor(assignments, "hero_headline") ?? x.title, ctaLabel: valueFor(assignments, "hero_cta") ?? x.ctaLabel, imageUrl: valueFor(assignments, "hero_image") ?? x.imageUrl } : x;
@@ -96,14 +98,15 @@ export default async function LandingPage() {
   const base = siteUrl();
   const jsonLd = [
     { "@context": "https://schema.org", "@type": "WebSite", name: s.store_name, url: base },
-    ...(planList.length
-      ? planList.map((product) => ({ "@context": "https://schema.org", "@type": "Product", name: product.name, description: product.shortDescription ?? undefined, sku: product.sku, brand: { "@type": "Brand", name: s.store_name }, ...(product.imageUrl ? { image: product.imageUrl } : {}), offers: { "@type": "Offer", url: `${base}/e-book#oferta`, priceCurrency: "BRL", price: (product.priceCents / 100).toFixed(2), availability: ctx.salesOpen ? "https://schema.org/InStock" : "https://schema.org/PreOrder" } }))
+    // Oferta nos dados estruturados só com venda aberta (nada de preço/disponibilidade não confirmados)
+    ...(planList.length && ctx.salesOpen
+      ? planList.map((product) => ({ "@context": "https://schema.org", "@type": "Product", name: product.name, description: product.shortDescription ?? undefined, sku: product.sku, brand: { "@type": "Brand", name: s.store_name }, ...(product.imageUrl ? { image: product.imageUrl } : {}), offers: { "@type": "Offer", url: `${base}/e-book#oferta`, priceCurrency: "BRL", price: (product.priceCents / 100).toFixed(2), availability: "https://schema.org/InStock" } }))
       : []),
     ...(ctx.faqs.length ? [{ "@context": "https://schema.org", "@type": "FAQPage", mainEntity: ctx.faqs.map((f) => ({ "@type": "Question", name: f.question, acceptedAnswer: { "@type": "Answer", text: f.answer.replace(/\[([^\]]+)\]\([^)]+\)/g, "$1") } })) }] : []),
   ];
 
   return (
-    <>
+    <div data-motion={isOn(s.landing_animations ?? "true") ? "on" : "off"}>
       <QuizWelcome texts={resultTexts} />
       {sections.map((x) => {
         const C = RENDER[x.type];
@@ -121,6 +124,6 @@ export default async function LandingPage() {
       <LandingTracker product={product ? { id: product.id, sku: product.sku, name: product.name, priceCents: product.priceCents } : null} />
       {isOn(s.sticky_cta_enabled) && product && <StickyMobileCTA label={`${s.sticky_cta_label || "Quero conhecer"} · ${planList.length > 1 ? "a partir de " : ""}${formatBRL(Math.min(...planList.map((x) => x.priceCents)))}`} />}
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }} />
-    </>
+    </div>
   );
 }

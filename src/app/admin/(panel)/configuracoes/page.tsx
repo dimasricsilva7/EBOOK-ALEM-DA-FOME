@@ -125,7 +125,7 @@ export default async function SettingsPage({ searchParams }: { searchParams: SP 
       {tab === "aparencia" && (
         <Card title="Aparência (tokens do design system) e layout">
           {form(
-            ["theme_primary", "theme_secondary", "theme_accent", "theme_ink", "theme_background", "announcement_text", "header_cta_label", "sticky_cta_enabled", "sticky_cta_label", "footer_text"],
+            ["theme_primary", "theme_secondary", "theme_accent", "theme_ink", "theme_background", "announcement_text", "header_cta_label", "sticky_cta_enabled", "sticky_cta_label", "footer_text", "landing_animations"],
             <>
               <div className="grid gap-4 sm:grid-cols-3 lg:grid-cols-5">
                 {[["theme_primary", "Primária"], ["theme_secondary", "Secundária"], ["theme_accent", "Destaque"], ["theme_ink", "Texto"], ["theme_background", "Fundo"]].map(([k, l]) => (
@@ -145,6 +145,7 @@ export default async function SettingsPage({ searchParams }: { searchParams: SP 
                 {text("footer_text", "Texto do rodapé")}
               </div>
               {check("sticky_cta_enabled", "Mostrar CTA fixo no mobile")}
+              {check("landing_animations", "Animações de entrada na página do e-book (quem pede menos movimento no aparelho nunca vê animações)")}
             </>
           )}
         </Card>

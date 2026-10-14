@@ -47,8 +47,11 @@ async function readErr(res: Response, fallback: string) {
  *     site de origem sair do ar). Links internos/privados são bloqueados (proteção SSRF).
  * Vídeos: link do YouTube/Vimeo ou MP4 hospedado (arquivos de vídeo não são guardados no banco).
  */
-export function MediaInput({ name, defaultValue, accept = "image/*", label, folder = "media" }: { name: string; defaultValue?: string | null; accept?: string; label?: string; folder?: string }) {
-  const [url, setUrl] = useState(defaultValue ?? "");
+export function MediaInput({ name, defaultValue, value, onChange, accept = "image/*", label, folder = "media" }: { name?: string; defaultValue?: string | null; value?: string; onChange?: (v: string) => void; accept?: string; label?: string; folder?: string }) {
+  const [inner, setInner] = useState(defaultValue ?? "");
+  // Controlado (dentro de listas) ou com estado próprio (campo de formulário)
+  const url = value ?? inner;
+  const setUrl = (v: string) => (onChange ? onChange(v) : setInner(v));
   const [status, setStatus] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const isVideoField = accept.startsWith("video");
@@ -165,6 +168,8 @@ export function ListEditor<T extends Record<string, unknown>>({ name, fields, de
                 </select>
               ) : f.type === "checkbox" ? (
                 <input type="checkbox" checked={Boolean(it[f.key])} onChange={(e) => update(i, f.key, e.target.checked)} className="mt-2 h-5 w-5" />
+              ) : f.type === "media" ? (
+                <MediaInput value={String(it[f.key] ?? "")} onChange={(v) => update(i, f.key, v)} folder="landing" />
               ) : f.type === "number" ? (
                 <input type="number" value={String(it[f.key] ?? "")} onChange={(e) => update(i, f.key, e.target.value === "" ? null : Number(e.target.value))} className={inputCls} />
               ) : (
@@ -245,6 +250,43 @@ export function IconItemsEditor({ name, defaultValue }: { name: string; defaultV
       addLabel="Adicionar item"
       newItem={() => ({ icon: "leaf", title: "", text: "" })}
       fields={[{ key: "icon", label: "Ícone", type: "select", options: ICONS, width: "w-32" }, { key: "title", label: "Título" }, { key: "text", label: "Texto", type: "textarea" }]}
+    />
+  );
+}
+
+/** Cards com imagem opcional (foto real ou ilustração) — ex.: identificação. */
+export function CardsEditor({ name, defaultValue }: { name: string; defaultValue: Record<string, unknown>[] }) {
+  return (
+    <ListEditor
+      name={name}
+      defaultValue={defaultValue}
+      addLabel="Adicionar card"
+      newItem={() => ({ icon: "leaf", title: "", text: "", image: "", alt: "" })}
+      fields={[
+        { key: "icon", label: "Ilustração (sem foto)", type: "select", options: ICONS, width: "w-32" },
+        { key: "title", label: "Frase curta" },
+        { key: "text", label: "Complemento", type: "textarea" },
+        { key: "image", label: "Foto (opcional)", type: "media", width: "w-full" },
+        { key: "alt", label: "Descrição da foto", width: "w-full" },
+      ]}
+    />
+  );
+}
+
+/** Etapas com explicação extra (ciclo interativo). */
+export function DetailStepsEditor({ name, defaultValue }: { name: string; defaultValue: Record<string, unknown>[] }) {
+  return (
+    <ListEditor
+      name={name}
+      defaultValue={defaultValue}
+      addLabel="Adicionar etapa"
+      newItem={() => ({ icon: "leaf", title: "", text: "", detail: "" })}
+      fields={[
+        { key: "icon", label: "Ícone", type: "select", options: ICONS, width: "w-32" },
+        { key: "title", label: "Etapa" },
+        { key: "text", label: "Explicação curta", type: "textarea" },
+        { key: "detail", label: "Explicação extra (ao tocar)", type: "textarea" },
+      ]}
     />
   );
 }

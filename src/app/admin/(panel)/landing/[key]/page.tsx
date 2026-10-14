@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Card, Field, PageHeader, inputCls, textareaCls } from "@/components/admin/ui";
 import { ActionForm, SubmitButton } from "@/components/admin/client";
-import { IconItemsEditor, MediaInput, StepsEditor, StringListEditor } from "@/components/admin/inputs";
+import { CardsEditor, DetailStepsEditor, IconItemsEditor, MediaInput, StepsEditor, StringListEditor } from "@/components/admin/inputs";
 import { SECTION_TYPES, type SectionType } from "@/lib/domain";
 import { db } from "@/lib/db";
 import { saveSection } from "../../cms-actions";
@@ -16,9 +16,11 @@ const label = "mb-1 text-xs font-semibold uppercase tracking-wide text-slate-500
 /** O que cada tipo usa (os demais campos ficam ocultos para não confundir). */
 const USES: Record<string, { body?: string; image?: string; cta?: boolean; video?: boolean }> = {
   hero: { image: "Imagem da primeira tela (vazio = capa do produto em composição de livro)", cta: true },
-  identification: { body: "Texto emocional (parágrafos)" },
+  identification: { body: "Frase de fechamento abaixo dos cards" },
+  cycle: { body: "Nota abaixo do ciclo (ex.: não é diagnóstico)" },
+  facts: {},
   patterns: { body: "Nota de rodapé (ex.: \"é uma possibilidade de reflexão, não diagnóstico\")" },
-  method: { body: "Observação abaixo dos pilares" },
+  method: { body: "Observação abaixo dos itens (ex.: limites do material)" },
   content: { body: "Observação abaixo dos materiais" },
   experience: { image: "Imagem/mockup da área de acesso (identifique se for ilustrativa)" },
   video: { video: true },
@@ -30,7 +32,7 @@ const USES: Record<string, { body?: string; image?: string; cta?: boolean; video
   limits: { body: "Texto do aviso (o que o produto NÃO é)" },
   faq: {},
   final_cta: { cta: true },
-  topics: { body: "Observação abaixo dos tópicos" },
+  topics: { body: "Texto abaixo do título (coluna da esquerda)" },
   showcase: { body: "Descrição do formato digital", image: "Mockup do e-book (vazio = capa do produto em composição de livro)", cta: true },
   author: { body: "Biografia (use **negrito** e *itálico*)", image: "Fotografia autêntica da autora" },
 };
@@ -61,7 +63,7 @@ export default async function EditSectionPage({ params }: { params: Promise<{ ke
             {u.cta && (
               <>
                 <Field label="Texto do botão"><input name="ctaLabel" defaultValue={section.ctaLabel ?? ""} className={inputCls} /></Field>
-                {t !== "offer" && <Field label="Destino do botão" hint="#oferta, #faq, /quiz…"><input name="ctaTarget" defaultValue={section.ctaTarget ?? ""} className={inputCls} /></Field>}
+                {t !== "offer" && <Field label="Destino do botão" hint="checkout = vai direto ao checkout (com vendas abertas); #oferta, #faq, / (quiz)…"><input name="ctaTarget" defaultValue={section.ctaTarget ?? ""} className={inputCls} /></Field>}
               </>
             )}
             {u.image && <div className="md:col-span-2"><MediaInput name="imageUrl" label={u.image} defaultValue={section.imageUrl} folder={t === "hero" ? "hero" : "landing"} /></div>}
@@ -69,7 +71,7 @@ export default async function EditSectionPage({ params }: { params: Promise<{ ke
           </div>
         </Card>
 
-        {["hero", "identification", "patterns", "experience", "method", "trust", "audience", "offer", "video", "topics", "showcase", "author"].includes(t) && (
+        {["hero", "identification", "patterns", "experience", "method", "trust", "audience", "offer", "video", "topics", "showcase", "author", "cycle", "facts"].includes(t) && (
           <Card title="Itens da seção">
             <div className="grid gap-4 md:grid-cols-2">
               {t === "hero" && (
@@ -85,8 +87,14 @@ export default async function EditSectionPage({ params }: { params: Promise<{ ke
               )}
               {t === "identification" && (
                 <div className="md:col-span-2">
-                  <p className={label}>Situações do dia a dia (linguagem empática, sem presumir)</p>
-                  <StringListEditor name="cfg_items" defaultValue={arr<string>(c.items)} addLabel="Adicionar situação" />
+                  <p className={label}>Cards (até 4) — frase curta + foto real opcional; sem foto, aparece a ilustração escolhida</p>
+                  <CardsEditor name="cfg_items" defaultValue={arr<string | Record<string, unknown>>(c.items).map((x) => (typeof x === "string" ? { icon: "leaf", title: x, text: "", image: "", alt: "" } : x))} />
+                </div>
+              )}
+              {t === "cycle" && (
+                <div className="md:col-span-2">
+                  <p className={label}>Etapas (a explicação extra aparece ao tocar na etapa)</p>
+                  <DetailStepsEditor name="cfg_steps" defaultValue={arr(c.steps)} />
                 </div>
               )}
               {(t === "patterns" || t === "experience") && (
@@ -101,9 +109,9 @@ export default async function EditSectionPage({ params }: { params: Promise<{ ke
                   <Field label="Descrição da imagem (acessibilidade)"><input name="cfg_imageAlt" defaultValue={s(c.imageAlt)} className={inputCls} /></Field>
                 </>
               )}
-              {(t === "method" || t === "trust" || t === "topics") && (
+              {(t === "method" || t === "trust" || t === "topics" || t === "facts") && (
                 <div className="md:col-span-2">
-                  <p className={label}>{t === "topics" ? "Tópicos do e-book (use os títulos reais do sumário)" : t === "method" ? "Pilares" : "Itens de confiança (suporte, pagamento seguro, privacidade…) — a autoria vem de Configurações → Autoria"}</p>
+                  <p className={label}>{t === "facts" ? "Itens (use {preco} para o preço atual do produto e [texto](/link) para links)" : t === "topics" ? "Temas do e-book (use os títulos reais do sumário)" : t === "method" ? "Pilares" : "Itens de confiança (suporte, pagamento seguro, privacidade…) — a autoria vem de Configurações → Autoria"}</p>
                   <IconItemsEditor name="cfg_items" defaultValue={arr(c.items)} />
                 </div>
               )}
@@ -114,6 +122,12 @@ export default async function EditSectionPage({ params }: { params: Promise<{ ke
                   <div><p className={label}>É para você se…</p><StringListEditor name="cfg_forYou" defaultValue={arr<string>(c.forYou)} /></div>
                   <div><p className={label}>Não é o caminho se…</p><StringListEditor name="cfg_notForYou" defaultValue={arr<string>(c.notForYou)} /></div>
                 </>
+              )}
+              {t === "offer" && (
+                <div className="md:col-span-2">
+                  <p className={label}>Como funciona o acesso (até 3 passos)</p>
+                  <StepsEditor name="cfg_steps" defaultValue={arr(c.steps)} />
+                </div>
               )}
               {t === "offer" && (
                 <div className="md:col-span-2">
@@ -128,12 +142,17 @@ export default async function EditSectionPage({ params }: { params: Promise<{ ke
                     <p className={label}>Formato e entrega (somente o que for verdade)</p>
                     <StringListEditor name="cfg_formatItems" defaultValue={arr<string>(c.formatItems)} addLabel="Adicionar item" />
                   </div>
-                  <Field label="Título da prévia de páginas" hint="As prévias são as imagens da Galeria — envie só páginas reais do e-book."><input name="cfg_previewTitle" defaultValue={s(c.previewTitle)} placeholder="Prévia de páginas internas" className={inputCls} /></Field>
+                  <div className="md:col-span-2">
+                    <p className={label}>Trechos curtos e autorizados do e-book (até 3, opcional)</p>
+                    <StringListEditor name="cfg_excerpts" defaultValue={arr<string>(c.excerpts)} addLabel="Adicionar trecho" />
+                  </div>
+                  <Field label="Título da prévia de páginas" hint="As páginas vêm de Galeria (admin) — envie só páginas reais do e-book. Sem imagens, a galeria não aparece."><input name="cfg_previewTitle" defaultValue={s(c.previewTitle)} placeholder="Prévia de páginas internas" className={inputCls} /></Field>
                   <Field label="Descrição do mockup (acessibilidade)"><input name="cfg_imageAlt" defaultValue={s(c.imageAlt)} className={inputCls} /></Field>
                 </>
               )}
               {t === "author" && (
                 <>
+                  <label className="flex items-start gap-2 rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm md:col-span-2"><input type="checkbox" name="cfg_confirmed" defaultChecked={s(c.confirmed) === "true"} className="mt-0.5 h-4 w-4" /> <span><strong>Autoria e imagem confirmadas.</strong> Marque só se a autoria do e-book está documentada (contrato/licença) e a foto é autorizada. Sem esta confirmação, a seção NÃO aparece no site.</span></label>
                   <Field label="Nome"><input name="cfg_name" defaultValue={s(c.name)} className={inputCls} /></Field>
                   <Field label="Linha abaixo do nome (opcional)"><input name="cfg_role" defaultValue={s(c.role)} className={inputCls} /></Field>
                   <Field label="Texto de contexto (relação com o tema)" className="md:col-span-2"><textarea name="cfg_context" rows={3} defaultValue={s(c.context)} className={textareaCls} /></Field>

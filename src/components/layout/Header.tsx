@@ -7,7 +7,7 @@ import { Logo } from "./Logo";
 
 const NAV = [
   { href: "/e-book#conteudo-do-ebook", label: "O e-book" },
-  { href: "/e-book#autora", label: "A autora" },
+  { href: "/e-book#por-dentro", label: "Por dentro" },
   { href: "/e-book#oferta", label: "Investimento" },
   { href: "/e-book#faq", label: "Dúvidas" },
   { href: "/", label: "Fazer o quiz" },

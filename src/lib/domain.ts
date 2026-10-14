@@ -188,6 +188,8 @@ export const SECTION_TYPES = {
   topics: "O que você encontrará no e-book (tópicos)",
   showcase: "Apresentação visual do produto",
   author: "Sobre a autora",
+  cycle: "Ciclo interativo (etapas tocáveis)",
+  facts: "Transparência (resumo da compra)",
 } as const;
 export type SectionType = keyof typeof SECTION_TYPES;
 
