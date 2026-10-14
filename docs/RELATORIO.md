@@ -7,7 +7,7 @@ Aplicação Next.js 15 (App Router) + Prisma/Postgres (Neon) publicada na Vercel
 |---|---|
 | `/` | **Entrada do funil: quiz** (abertura → 5 perguntas → e-mail opcional → resultado) |
 | `/quiz` | Mesmo quiz (links antigos continuam funcionando; canonical = `/`) |
-| `/e-book` | Página de vendas (hero, identificação, como funciona, tópicos, produto, autora, para quem, oferta, FAQ, CTA final) |
+| `/e-book` | Página de vendas (hero com mockup → identificação em cards → ciclo interativo → o que é → por dentro/galeria → autora → o que esperar → oferta → transparência → FAQ → CTA final) |
 | `/checkout` → `/pedido/[número]?t=…` | PIX, upsell e área de acesso |
 | `/acesso`, `/suporte`, políticas | Reenvio de acesso, contato e páginas institucionais |
 
@@ -32,7 +32,17 @@ Produção: **https://alem-da-fome.vercel.app** · Admin: **/admin** · Reposit�
 | Além da Fome — E-book | `alem-da-fome-ebook` | R$ 67,00 | **única oferta ativa** |
 | Além da Fome Completo | `alem-da-fome-completo` | — | **desativado** (`active=false`): some da página, do sitemap e do upsell; o checkout recusa (409). Pedidos antigos preservados. |
 
-O preço vem só do banco (frontend e backend usam o mesmo produto; o servidor recalcula o total).
+O preço vem só do banco (frontend e backend usam o mesmo produto; o servidor recalcula o total). Nos textos do admin, `{preco}` é trocado pelo preço atual.
+
+## 4.1 Página do e-book (reformulação visual — UI/UX e CRO)
+- **Hero** em duas colunas com **mockup do livro** (capa real do produto ou capa tipográfica neutra, nunca páginas inventadas), leve flutuação (desligável) e indicador de rolagem. CTA primário vai direto ao **checkout real** (`ctaTarget="checkout"`); com vendas fechadas ou sem material pronto, rola até a oferta, que mostra o estado verdadeiro. CTA secundário abre o quiz.
+- **Identificação** em até 4 cards com **foto real** (enviada no admin, arquivo ou link) ou, sem foto, **ilustração editorial SVG** em traço fino (`Illustrations.tsx`) — decorativa, sem fingir fotografia.
+- **Ciclo interativo** (`cycle`): 4 etapas tocáveis (não depende de hover; `aria-expanded/-controls`); linha horizontal no desktop, vertical no celular. Apresentado como reflexão, não diagnóstico.
+- **Por dentro do e-book** (`showcase`): galeria real arrastável com setas, indicadores, teclado e **ampliação** (`<dialog>`), montada só com a capa + páginas enviadas na **Galeria** do admin (sem páginas → galeria some). Campo opcional de **trechos autorizados**.
+- **Sobre a autora** (`author`): só é publicada quando o admin marca **"autoria e imagem confirmadas"** — enquanto não houver confirmação dos direitos, a seção não aparece.
+- **O que esperar** (`method`, faixa escura) e **Transparência** (`facts`, grade com o resumo da compra) substituem blocos longos de texto; a oferta tem mockup, passos de acesso e links para dúvidas/suporte/termos/reembolso.
+- **Animações** com propósito (fade/rise ao entrar na viewport, microinterações nos CTAs e no mockup), respeitando `prefers-reduced-motion` e um toggle em **Configurações → Aparência** (`data-motion`).
+- Tudo editável no editor de seções existente (sem painel duplicado): cards com imagem, etapas do ciclo, trechos, itens de transparência e passos da oferta.
 
 ## 5. Conteúdo e seed
 `prisma/seed.ts` roda em **todo build** (`npm run build`), é idempotente e versionado (`Setting content_version`):
@@ -70,8 +80,9 @@ Título/descrição próprios para `/` e `/e-book`, canonical por página (antes
 
 ## 10. Testes executados
 - `tsc`, ESLint e build sem erros; **20 testes unitários** (preço, quiz, temas combinados, navegação, segurança).
-- **E2E** (`scripts/e2e-funnel.ts`, modo simulado, local) — 12/12: vendas fechadas e sem material recusam; `/` abre o quiz, `/quiz` ok, `/e-book` só com R$ 67 e seção da autora; Completo recusado no checkout; quiz com consentimento e resultado no servidor; checkout R$ 67 idempotente e honeypot; sem acesso antes do pagamento; webhook assinado idempotente e assinatura inválida 401; entrega só do E-book; lead ligado ao pedido; e-mails; upsell gera novo PIX; reembolso revoga.
-- **Navegador** (`scripts/quiz-flow.ts`, Playwright, 390 px e 1440 px): validação do consentimento, voltar preserva a resposta, e-mail opcional (pular), resultado completo, CTA com UTM, âncoras `#como-funciona`/`#autora`/`#oferta`, sem rolagem horizontal e sem erros de console.
+- **E2E** (`scripts/e2e-funnel.ts`, modo simulado, local) — 12/12: vendas fechadas e sem material recusam; `/` abre o quiz, `/quiz` ok, `/e-book` só com R$ 67, seções novas presentes e autoria não confirmada não publicada; Completo recusado no checkout; quiz com consentimento e resultado no servidor; checkout R$ 67 idempotente e honeypot; sem acesso antes do pagamento; webhook assinado idempotente e assinatura inválida 401; entrega só do E-book; lead ligado ao pedido; e-mails; upsell gera novo PIX; reembolso revoga.
+- **Navegador — quiz** (`scripts/quiz-flow.ts`, Playwright, 390 e 1440 px): validação do consentimento, voltar preserva a resposta, e-mail opcional, resultado completo, CTA com UTM, sem rolagem horizontal e sem erros de console.
+- **Navegador — página do e-book** (`scripts/landing-check.ts`, **320/360/390/430/768/1024/1440 px**): sem rolagem horizontal, H1 único, ciclo tocável abre a explicação, galeria com setas/ampliação, FAQ abre, sem erros de console.
 - Não testado: compra real (sem autorização para cobrar) e e-mails reais (Resend não configurado).
 
 ## 11. Rodar localmente / deploy

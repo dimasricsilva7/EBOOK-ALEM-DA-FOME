@@ -4,8 +4,8 @@
 |---|---|---|---|
 | 1 | **Banco permanente.** O banco atual é temporário (expira 16/10/2026). Criar um Neon pela Vercel (Storage) — passo a passo abaixo | Vercel → projeto alem-da-fome → Storage | 🔴 até 16/10 |
 | 2 | Enviar o PDF real do e-book e marcar como **Pronto**; enviar a capa | Admin → Produtos e materiais | 🔴 antes de vender |
-| 3 | Fotografia autorizada da autora (arquivo ou link) e conferir os tópicos com o sumário real | Admin → Landing → Sobre a autora / Tópicos | 🔴 antes de vender |
-| 4 | Confirmar que existe autorização para usar o nome, a obra e a imagem de Geneen Roth | — | 🔴 antes de anunciar |
+| 3 | **Seção da autora:** hoje ela NÃO aparece no site. Para publicá-la, confirme os direitos, envie a foto autorizada e marque "Autoria e imagem confirmadas" | Admin → Landing → Sobre a autora | 🔴 antes de anunciar |
+| 3b | Conferir os temas de "O que é o Além da Fome" com o sumário real; enviar páginas reais na Galeria para a prévia; opcional: trechos autorizados | Admin → Landing / Galeria | 🟠 |
 | 5 | Webhook `https://alem-da-fome.vercel.app/api/webhooks/bravopay` na BravoPay + `BRAVOPAY_WEBHOOK_SECRET` na Vercel (redeploy) | BravoPay + Vercel | 🔴 antes de vender |
 | 6 | `RESEND_API_KEY` e `EMAIL_FROM` (domínio verificado no Resend) | Vercel → Environment Variables | 🔴 antes de vender |
 | 7 | Dados de empresa/CNPJ, e-mail de suporte; revisar políticas (modelos) | Admin → Configurações | 🟠 |
